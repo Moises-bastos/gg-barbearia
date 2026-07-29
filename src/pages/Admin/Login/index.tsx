@@ -2,6 +2,7 @@ import "./style.css";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../../lib/supabase";
+import { erro, aviso } from "../../../utils/toast";
 
 function Login() {
   const navigate = useNavigate();
@@ -11,7 +12,7 @@ function Login() {
 
   async function fazerLogin() {
     if (!email || !senha) {
-      alert("Preencha todos os campos.");
+      aviso("Preencha todos os campos.");
       return;
     }
 
@@ -21,7 +22,7 @@ function Login() {
     });
 
     if (error) {
-      alert("E-mail ou senha inválidos.");
+      erro("E-mail ou senha inválidos.");
       return;
     }
 

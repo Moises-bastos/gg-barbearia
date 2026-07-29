@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../../lib/supabase";
 import AppointmentCard from "../../../components/AppointmentCard";
 import { useNavigate } from "react-router-dom";
+import { sucesso, erro } from "../../../utils/toast";
 
 type Agendamento = {
   id: number;
@@ -67,9 +68,11 @@ function Dashboard() {
 
     if (error) {
       console.log(error);
-      alert("Erro ao confirmar.");
+      erro("Erro ao confirmar agendamento.");
       return;
     }
+
+    sucesso("Agendamento confirmado com sucesso!");
 
     buscarAgendamentos();
   }
@@ -92,9 +95,11 @@ function Dashboard() {
 
     if (error) {
       console.log(error);
-      alert("Erro ao cancelar.");
+      erro("Erro ao cancelar agendamento.");
       return;
     }
+
+    sucesso("Agendamento cancelado com sucesso!");
 
     buscarAgendamentos();
   }

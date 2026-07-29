@@ -4,6 +4,12 @@
   box-sizing: border-box;
 }
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  background-color: #1a1a1a; /* mesma cor escura do seu tema */
+  overflow-x: hidden;
 }
+

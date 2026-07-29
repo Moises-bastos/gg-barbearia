@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { horarios } from "../../../data/horarios";
 import { supabase } from "../../../lib/supabase";
+import { sucesso, erro, aviso } from "../../../utils/toast";
 
 function Agendamento() {
   const location = useLocation();
@@ -59,68 +60,68 @@ function Agendamento() {
     return horarioEmMinutos > horarioAtual;
   });
 
-  async function confirmarAgendamento() {
+async function confirmarAgendamento() {
 
-    if (!nome.trim()) {
-      alert("Digite seu nome.");
-      return;
-    }
-
-    if (!telefone.trim()) {
-      alert("Digite seu telefone.");
-      return;
-    }
-
-    if (!horarioSelecionado) {
-      alert("Escolha um horário.");
-      return;
-    }
-
-    const { data: existente } = await supabase
-      .from("agendamentos")
-      .select("id")
-      .eq("data", dataHoje)
-      .eq("horario", horarioSelecionado)
-      .neq("status", "Cancelado");
-
-    if (existente && existente.length > 0) {
-      alert("Esse horário já foi agendado.");
-      buscarHorariosOcupados();
-      return;
-    }
-
-    const { error } = await supabase
-      .from("agendamentos")
-      .insert([
-        {
-          nome: nome,
-          telefone: telefone,
-          servico: servico.nome,
-          preco: Number(
-            servico.preco
-              .replace("R$", "")
-              .replace(",", ".")
-          ),
-          horario: horarioSelecionado,
-          data: dataHoje,
-          status: "Pendente",
-        },
-      ]);
-
-    if (error) {
-      console.log(error);
-      alert("Erro ao salvar agendamento.");
-      return;
-    }
-
-    alert("Agendamento realizado com sucesso!");
-
-    setNome("");
-    setTelefone("");
-    setHorarioSelecionado("");
-
-    buscarHorariosOcupados();
+  if (!nome.trim()) {
+    aviso("Digite seu nome.");
+    return;
   }
+
+  if (!telefone.trim()) {
+    aviso("Digite seu telefone.");
+    return;
+  }
+
+  if (!horarioSelecionado) {
+    aviso("Escolha um horário.");
+    return;
+  }
+
+  const { data: existente } = await supabase
+    .from("agendamentos")
+    .select("id")
+    .eq("data", dataHoje)
+    .eq("horario", horarioSelecionado)
+    .neq("status", "Cancelado");
+
+  if (existente && existente.length > 0) {
+    erro("Esse horário já foi agendado.");
+    buscarHorariosOcupados();
+    return;
+  }
+
+  const { error: insertError } = await supabase
+    .from("agendamentos")
+    .insert([
+      {
+        nome,
+        telefone,
+        servico: servico.nome,
+        preco: Number(
+          servico.preco
+            .replace("R$", "")
+            .replace(",", ".")
+        ),
+        horario: horarioSelecionado,
+        data: dataHoje,
+        status: "Pendente",
+      },
+    ]);
+
+  if (insertError) {
+    console.log(insertError);
+    erro("Erro ao salvar agendamento.");
+    return;
+  }
+
+  sucesso("Agendamento realizado com sucesso!");
+
+  setNome("");
+  setTelefone("");
+  setHorarioSelecionado("");
+
+  buscarHorariosOcupados();
+}
 
   return (
     <div className="agendamento">

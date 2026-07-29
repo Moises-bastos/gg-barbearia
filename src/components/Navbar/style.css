@@ -48,3 +48,23 @@
 .menu li:hover::after{
     width:100%;
 }
+
+@media (max-width: 768px) {
+
+  .navbar{
+    padding: 10px 20px;
+  }
+
+  .logo{
+    height: 60px;
+  }
+
+  .menu{
+    gap: 18px;
+  }
+
+  .menu li{
+    font-size: 14px;
+  }
+
+}
