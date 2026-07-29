@@ -1,0 +1,109 @@
+.dashboard {
+    background: #26241f;
+    min-height: 100vh;
+    padding: 50px 8%;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+}
+
+.dashboard-title {
+    color: #E6D2B5;
+    font-size: 36px;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.appointments {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px,1fr));
+    gap: 25px;
+}
+.cancelado {
+    background: #dc3545;
+    color: white;
+}
+.dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin: 30px 0;
+}
+
+.dashboard-card {
+    background: #1d1d1d;
+    padding: 25px;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid #333;
+    transition: .3s;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    border-color: #E6D2B5;
+}
+
+.dashboard-card h3 {
+    color: #E6D2B5;
+    margin-bottom: 15px;
+}
+
+.dashboard-card span {
+    color: white;
+    font-size: 32px;
+    font-weight: bold;
+}
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.logout {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: .3s;
+}
+
+.logout:hover {
+    background: #b52a37;
+}
+.data-hoje {
+    text-align: center;
+    color: #E6D2B5;
+    font-size: 18px;
+    margin-bottom: 30px;
+}
+
+.sem-agendamentos {
+    color: white;
+    text-align: center;
+    width: 100%;
+    margin-top: 60px;
+}
+
+@media (max-width: 900px) {
+
+    .dashboard-cards{
+        grid-template-columns: repeat(2,1fr);
+    }
+
+}
+
+@media (max-width:600px){
+
+    .dashboard-cards{
+        grid-template-columns:1fr;
+    }
+
+}

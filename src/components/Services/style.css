@@ -1,0 +1,73 @@
+.services {
+    width: 100%;
+    padding: 90px 8%;
+    background: #26241f;
+}
+
+.services h2 {
+    text-align: center;
+    color: #E6D2B5;
+    font-size: 40px;
+}
+
+.services p {
+    text-align: center;
+    color: #fff;
+    margin-top: 10px;
+    margin-bottom: 60px;
+}
+
+.services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 30px;
+}
+
+.card {
+    background: #1d1d1d;
+    border-radius: 12px;
+    padding: 30px;
+    transition: 0.3s;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.card:hover {
+    transform: translateY(-8px);
+    border-color: #E6D2B5;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.card h3 {
+    color: #E6D2B5;
+    margin-bottom: 15px;
+}
+
+.card span {
+    display: block;
+    color: #bdbdbd;
+    margin-bottom: 10px;
+}
+
+.card strong {
+    display: block;
+    color: #fff;
+    font-size: 22px;
+    margin-bottom: 20px;
+}
+
+.card button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    background: #E6D2B5;
+    color: #111;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.card button:hover {
+    background: #d8bc97;
+}

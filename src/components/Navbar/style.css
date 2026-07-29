@@ -1,0 +1,50 @@
+.navbar {
+    height: 90px;
+
+    background-color: #1E1F1A;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 0 80px;
+}
+
+.logo {
+    height: 70px;
+}
+
+.menu {
+    display: flex;
+    gap: 40px;
+
+    list-style: none;
+}
+
+.menu li{
+    list-style:none;
+    cursor:pointer;
+    color:white;
+    font-weight:600;
+    transition:.3s;
+    position:relative;
+}
+
+.menu li::after{
+    content:"";
+    position:absolute;
+    left:0;
+    bottom:-6px;
+    width:0;
+    height:2px;
+    background:#E6D2B5;
+    transition:.3s;
+}
+
+.menu li:hover{
+    color:#E6D2B5;
+}
+
+.menu li:hover::after{
+    width:100%;
+}
