@@ -89,3 +89,13 @@
 .historico-table td:nth-child(7){
     width:15%;
 }
+.table-container{
+    width:100%;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+}
+
+.historico-table{
+    width:100%;
+    min-width:900px;
+}

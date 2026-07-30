@@ -50,58 +50,62 @@ return (
 
     ) : (
 
-      <table className="historico-table">
+      <div className="table-container">
 
-        <thead>
-          <tr>
-            <th>Cliente</th>
-            <th>Telefone</th>
-            <th>Serviço</th>
-            <th>Data</th>
-            <th>Horário</th>
-            <th>Valor</th>
-            <th>Status</th>
-          </tr>
-        </thead>
+        <table className="historico-table">
 
-        <tbody>
-
-          {historico.map((item) => (
-
-            <tr key={item.id}>
-
-              <td>{item.nome}</td>
-
-              <td>{item.telefone}</td>
-
-              <td>{item.servico}</td>
-
-              <td>
-                {new Date(item.data).toLocaleDateString("pt-BR")}
-              </td>
-
-              <td>{item.horario}</td>
-
-              <td>
-                {item.preco.toLocaleString("pt-BR", {
-                  style: "currency",
-                  currency: "BRL",
-                })}
-              </td>
-
-              <td>
-                {item.status === "Concluído"
-                  ? "✅ Concluído"
-                  : "❌ Cancelado"}
-              </td>
-
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Telefone</th>
+              <th>Serviço</th>
+              <th>Data</th>
+              <th>Horário</th>
+              <th>Valor</th>
+              <th>Status</th>
             </tr>
+          </thead>
 
-          ))}
+          <tbody>
 
-        </tbody>
+            {historico.map((item) => (
 
-      </table>
+              <tr key={item.id}>
+
+                <td>{item.nome}</td>
+
+                <td>{item.telefone}</td>
+
+                <td>{item.servico}</td>
+
+                <td>
+                  {new Date(item.data).toLocaleDateString("pt-BR")}
+                </td>
+
+                <td>{item.horario}</td>
+
+                <td>
+                  {item.preco.toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  })}
+                </td>
+
+                <td>
+                  {item.status === "Concluído"
+                    ? "✅ Concluído"
+                    : "❌ Cancelado"}
+                </td>
+
+              </tr>
+
+            ))}
+
+          </tbody>
+
+        </table>
+
+      </div>
 
     )}
 
