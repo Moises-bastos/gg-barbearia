@@ -7,6 +7,7 @@ import Login from "../pages/Admin/Login";
 import Dashboard from "../pages/Admin/Dashboard";
 
 import ProtectedRoute from "../components/ProtectedRoute";
+import Historico from "../pages/Admin/Historico";
 
 function AppRoutes() {
   return (
@@ -31,9 +32,21 @@ function AppRoutes() {
               <Dashboard />
             </ProtectedRoute>
           }
+
         />
+
+        <Route
+  path="/historico"
+  element={
+    <ProtectedRoute>
+      <Historico />
+    </ProtectedRoute>
+  }
+/>
       </Routes>
     </BrowserRouter>
+
+    
   );
 }
 

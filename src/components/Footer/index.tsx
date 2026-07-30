@@ -10,7 +10,7 @@ function Footer() {
 
       <p>📞 (86) 81458049</p>
 
-      <p>📷 @gg_do_corte</p>
+      <p>📷 @gg_barbearia86</p>
 
       <p>🕒 Segunda a Sábado</p>
 

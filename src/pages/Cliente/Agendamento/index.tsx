@@ -10,16 +10,17 @@ function Agendamento() {
 
   const servico = location.state;
 
+  const hoje = new Date().toISOString().split("T")[0];
+
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
+  const [dataSelecionada, setDataSelecionada] = useState(hoje);
   const [horarioSelecionado, setHorarioSelecionado] = useState("");
   const [horariosOcupados, setHorariosOcupados] = useState<string[]>([]);
 
-  const dataHoje = new Date().toISOString().split("T")[0];
-
   useEffect(() => {
     buscarHorariosOcupados();
-  }, []);
+  }, [dataSelecionada]);
 
   if (!servico) {
     return <h1>Nenhum serviço selecionado.</h1>;
@@ -29,7 +30,7 @@ function Agendamento() {
     const { data, error } = await supabase
       .from("agendamentos")
       .select("horario")
-      .eq("data", dataHoje)
+      .eq("data", dataSelecionada)
       .neq("status", "Cancelado");
 
     if (error) {
@@ -57,71 +58,78 @@ function Agendamento() {
 
     const horarioEmMinutos = hora * 60 + minuto;
 
+    // Se não for hoje, mostra todos os horários
+    if (dataSelecionada !== hoje) {
+      return true;
+    }
+
+    // Se for hoje, remove horários que já passaram
     return horarioEmMinutos > horarioAtual;
   });
 
-async function confirmarAgendamento() {
+  async function confirmarAgendamento() {
 
-  if (!nome.trim()) {
-    aviso("Digite seu nome.");
-    return;
-  }
+    if (!nome.trim()) {
+      aviso("Digite seu nome.");
+      return;
+    }
 
-  if (!telefone.trim()) {
-    aviso("Digite seu telefone.");
-    return;
-  }
+    if (!telefone.trim()) {
+      aviso("Digite seu telefone.");
+      return;
+    }
 
-  if (!horarioSelecionado) {
-    aviso("Escolha um horário.");
-    return;
-  }
+    if (!horarioSelecionado) {
+      aviso("Escolha um horário.");
+      return;
+    }
 
-  const { data: existente } = await supabase
-    .from("agendamentos")
-    .select("id")
-    .eq("data", dataHoje)
-    .eq("horario", horarioSelecionado)
-    .neq("status", "Cancelado");
+    const { data: existente } = await supabase
+      .from("agendamentos")
+      .select("id")
+      .eq("data", dataSelecionada)
+      .eq("horario", horarioSelecionado)
+      .neq("status", "Cancelado");
 
-  if (existente && existente.length > 0) {
-    erro("Esse horário já foi agendado.");
+    if (existente && existente.length > 0) {
+      erro("Esse horário já foi agendado.");
+      buscarHorariosOcupados();
+      return;
+    }
+
+    const { error: insertError } = await supabase
+      .from("agendamentos")
+      .insert([
+        {
+          nome,
+          telefone,
+          servico: servico.nome,
+          preco: Number(
+            servico.preco
+              .replace("R$", "")
+              .replace(",", ".")
+          ),
+          horario: horarioSelecionado,
+          data: dataSelecionada,
+          status: "Pendente",
+        },
+      ]);
+
+    if (insertError) {
+      console.log(insertError);
+      erro("Erro ao salvar agendamento.");
+      return;
+    }
+
+    sucesso("Agendamento realizado com sucesso!");
+
+    setNome("");
+    setTelefone("");
+    setHorarioSelecionado("");
+    setDataSelecionada(hoje);
+
     buscarHorariosOcupados();
-    return;
   }
-
-  const { error: insertError } = await supabase
-    .from("agendamentos")
-    .insert([
-      {
-        nome,
-        telefone,
-        servico: servico.nome,
-        preco: Number(
-          servico.preco
-            .replace("R$", "")
-            .replace(",", ".")
-        ),
-        horario: horarioSelecionado,
-        data: dataHoje,
-        status: "Pendente",
-      },
-    ]);
-
-  if (insertError) {
-    console.log(insertError);
-    erro("Erro ao salvar agendamento.");
-    return;
-  }
-
-  sucesso("Agendamento realizado com sucesso!");
-
-  setNome("");
-  setTelefone("");
-  setHorarioSelecionado("");
-
-  buscarHorariosOcupados();
-}
 
   return (
     <div className="agendamento">
@@ -159,11 +167,22 @@ async function confirmarAgendamento() {
           />
         </div>
 
+        <div className="input-group">
+          <label>Data</label>
+
+          <input
+            type="date"
+            value={dataSelecionada}
+            min={hoje}
+            onChange={(e) => setDataSelecionada(e.target.value)}
+          />
+        </div>
+
         <h3>Escolha um horário</h3>
 
         {horariosDisponiveis.length === 0 ? (
           <p className="sem-horarios">
-            Hoje não há mais horários disponíveis.
+            Não há horários disponíveis para esta data.
           </p>
         ) : (
           <div className="horarios">

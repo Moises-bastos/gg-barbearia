@@ -1,0 +1,91 @@
+.historico-page{
+    min-height:100vh;
+    background:#26241f;
+    padding:40px;
+}
+
+.historico-page h1{
+    text-align:center;
+    color:#E6D2B5;
+    margin-bottom:35px;
+    font-size:40px;
+}
+
+.table-container{
+    width:100%;
+    overflow-x:auto;
+}
+
+.historico-table{
+    width:100%;
+    border-collapse:collapse;
+    background:#1d1d1d;
+    border-radius:10px;
+    overflow:hidden;
+    table-layout:fixed;
+}
+
+.historico-table thead{
+    background:#D9C2A3;
+}
+
+.historico-table th{
+    color:#1E1F1A;
+    padding:16px;
+    font-size:16px;
+    text-align:center;
+}
+
+.historico-table td{
+    color:#fff;
+    padding:14px;
+    border-bottom:1px solid #333;
+    text-align:center;
+
+    word-break:break-word;
+}
+
+.historico-table tbody tr:nth-child(even){
+    background:#262626;
+}
+
+.historico-table tbody tr:hover{
+    background:#3a3a3a;
+}
+
+/* largura das colunas */
+
+.historico-table th:nth-child(1),
+.historico-table td:nth-child(1){
+    width:18%;
+}
+
+.historico-table th:nth-child(2),
+.historico-table td:nth-child(2){
+    width:15%;
+}
+
+.historico-table th:nth-child(3),
+.historico-table td:nth-child(3){
+    width:18%;
+}
+
+.historico-table th:nth-child(4),
+.historico-table td:nth-child(4){
+    width:12%;
+}
+
+.historico-table th:nth-child(5),
+.historico-table td:nth-child(5){
+    width:10%;
+}
+
+.historico-table th:nth-child(6),
+.historico-table td:nth-child(6){
+    width:12%;
+}
+
+.historico-table th:nth-child(7),
+.historico-table td:nth-child(7){
+    width:15%;
+}

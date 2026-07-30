@@ -1,44 +1,62 @@
+/* ===== DASHBOARD ===== */
+
 .dashboard {
     background: #26241f;
     min-height: 100vh;
-    padding: 50px 8%;
+    width: 100%;
+    padding: 90px 8% 50px; /* espaço no topo pros botões fixos */
 }
 
-.dashboard-header {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: 20px;
+/* ===== HEADER ===== */
+
+.dashboard-header{
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    margin-bottom:20px;
 }
 
-.dashboard-title {
-    color: #E6D2B5;
-    font-size: 36px;
-    text-align: center;
-    margin-bottom: 15px;
+.historico-btn,
+.logout{
+    border:none;
+    border-radius:8px;
+    padding:8px 14px;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    transition:.3s;
 }
 
-.appointments {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px,1fr));
-    gap: 25px;
+.historico-btn{
+    background:#D9C2A3;
+    color:#1E1F1A;
 }
-.cancelado {
-    background: #dc3545;
-    color: white;
+
+.logout{
+    background:#c0392b;
+    color:white;
 }
+
+.historico-btn:hover,
+.logout:hover{
+    transform:translateY(-2px);
+}
+
+/* ===== CARDS ===== */
+
 .dashboard-cards {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 20px;
-    margin: 30px 0;
+    margin-bottom: 40px;
 }
 
 .dashboard-card {
     background: #1d1d1d;
-    padding: 25px;
-    border-radius: 12px;
-    text-align: center;
     border: 1px solid #333;
+    border-radius: 12px;
+    padding: 25px;
+    text-align: center;
     transition: .3s;
 }
 
@@ -53,57 +71,79 @@
 }
 
 .dashboard-card span {
-    color: white;
+    color: #fff;
     font-size: 32px;
     font-weight: bold;
 }
-.dashboard-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
+.dashboard-title{
+    color:#E6D2B5;
+    font-size:42px;
+    text-align:center;
+    margin-top:15px;
+    margin-bottom:8px;
 }
 
-.logout {
+.data-hoje{
+    text-align:center;
+    color:#E6D2B5;
+    font-size:18px;
+    opacity:1;
+    margin-bottom:35px;
+}
+
+/* ===== AGENDAMENTOS ===== */
+
+.appointments {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 25px;
+}
+
+.cancelado {
     background: #dc3545;
-    color: white;
-    border: none;
-    padding: 12px 20px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: .3s;
-}
-
-.logout:hover {
-    background: #b52a37;
-}
-.data-hoje {
-    text-align: center;
-    color: #E6D2B5;
-    font-size: 18px;
-    margin-bottom: 30px;
+    color: #fff;
 }
 
 .sem-agendamentos {
-    color: white;
-    text-align: center;
     width: 100%;
+    text-align: center;
+    color: #fff;
     margin-top: 60px;
 }
 
+/* ===== RESPONSIVIDADE ===== */
+
 @media (max-width: 900px) {
 
-    .dashboard-cards{
-        grid-template-columns: repeat(2,1fr);
+    .dashboard-cards {
+        grid-template-columns: repeat(2, 1fr);
     }
-
 }
 
-@media (max-width:600px){
+@media (max-width: 600px) {
 
-    .dashboard-cards{
-        grid-template-columns:1fr;
+    .dashboard {
+        padding: 80px 20px 30px;
     }
 
+    .acoes-dashboard {
+        top: 12px;
+        right: 12px;
+        gap: 6px;
+    }
+
+    .historico,
+    .logout {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+
+    .dashboard-title {
+        font-size: 28px;
+    }
+
+    .dashboard-cards,
+    .appointments {
+        grid-template-columns: 1fr;
+    }
 }

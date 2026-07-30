@@ -43,64 +43,49 @@ function Dashboard() {
     }
   }
 
-  // Estatísticas
   const totalClientes = agendamentos.length;
 
   const pendentes = agendamentos.filter(
-    (agendamento) => agendamento.status === "Pendente"
+    (a) => a.status === "Pendente"
   ).length;
 
   const concluidos = agendamentos.filter(
-    (agendamento) => agendamento.status === "Concluído"
+    (a) => a.status === "Concluído"
   ).length;
 
   const receita = agendamentos
-    .filter((agendamento) => agendamento.status === "Concluído")
-    .reduce((total, agendamento) => total + agendamento.preco, 0);
+    .filter((a) => a.status === "Concluído")
+    .reduce((total, a) => total + a.preco, 0);
 
   async function confirmarAgendamento(id: number) {
     const { error } = await supabase
       .from("agendamentos")
-      .update({
-        status: "Concluído",
-      })
+      .update({ status: "Concluído" })
       .eq("id", id);
 
     if (error) {
-      console.log(error);
       erro("Erro ao confirmar agendamento.");
       return;
     }
 
-    sucesso("Agendamento confirmado com sucesso!");
-
+    sucesso("Agendamento confirmado!");
     buscarAgendamentos();
   }
 
   async function cancelarAgendamento(id: number) {
-    const confirmar = window.confirm(
-      "Deseja realmente cancelar este agendamento?"
-    );
-
-    if (!confirmar) {
-      return;
-    }
+    if (!window.confirm("Deseja cancelar este agendamento?")) return;
 
     const { error } = await supabase
       .from("agendamentos")
-      .update({
-        status: "Cancelado",
-      })
+      .update({ status: "Cancelado" })
       .eq("id", id);
 
     if (error) {
-      console.log(error);
-      erro("Erro ao cancelar agendamento.");
+      erro("Erro ao cancelar.");
       return;
     }
 
-    sucesso("Agendamento cancelado com sucesso!");
-
+    sucesso("Agendamento cancelado!");
     buscarAgendamentos();
   }
 
@@ -109,68 +94,84 @@ function Dashboard() {
     navigate("/login");
   }
 
-  return (
-    <div className="dashboard">
-      <div className="dashboard-header">
-        <button className="logout" onClick={logout}>
-          🚪 Sair
-        </button>
-      </div>
+return (
+  <div className="dashboard">
 
-      <h1 className="dashboard-title">
-        Painel do Barbeiro
-      </h1>
+    <div className="dashboard-header">
 
-      <p className="data-hoje">
-        Agendamentos de hoje -{" "}
-        {new Date().toLocaleDateString("pt-BR")}
-      </p>
+      <button
+        className="historico-btn"
+        onClick={() => navigate("/historico")}
+      >
+       Histórico
+      </button>
 
-      <div className="dashboard-cards">
-        <div className="dashboard-card">
-          <h3>👥 Clientes</h3>
-          <span>{totalClientes}</span>
-        </div>
+      <button
+        className="logout"
+        onClick={logout}
+      >
+       Sair
+      </button>
 
-        <div className="dashboard-card">
-          <h3>💰 Receita</h3>
-          <span>
-            {receita.toLocaleString("pt-BR", {
-              style: "currency",
-              currency: "BRL",
-            })}
-          </span>
-        </div>
-
-        <div className="dashboard-card">
-          <h3>🟡 Pendentes</h3>
-          <span>{pendentes}</span>
-        </div>
-
-        <div className="dashboard-card">
-          <h3>🟢 Concluídos</h3>
-          <span>{concluidos}</span>
-        </div>
-      </div>
-
-      <div className="appointments">
-        {agendamentos.length === 0 ? (
-          <h2 className="sem-agendamentos">
-            Nenhum agendamento para hoje.
-          </h2>
-        ) : (
-          agendamentos.map((agendamento) => (
-            <AppointmentCard
-              key={agendamento.id}
-              agendamento={agendamento}
-              confirmarAgendamento={confirmarAgendamento}
-              cancelarAgendamento={cancelarAgendamento}
-            />
-          ))
-        )}
-      </div>
     </div>
-  );
+
+    <h1 className="dashboard-title">
+      Painel do Barbeiro
+    </h1>
+
+    <p className="data-hoje">
+      Agendamentos de hoje -{" "}
+      {new Date().toLocaleDateString("pt-BR")}
+    </p>
+
+    <div className="dashboard-cards">
+
+      <div className="dashboard-card">
+        <h3>👥 Clientes</h3>
+        <span>{totalClientes}</span>
+      </div>
+
+      <div className="dashboard-card">
+        <h3>💰 Receita</h3>
+        <span>
+          {receita.toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          })}
+        </span>
+      </div>
+
+      <div className="dashboard-card">
+        <h3>🟡 Pendentes</h3>
+        <span>{pendentes}</span>
+      </div>
+
+      <div className="dashboard-card">
+        <h3>🟢 Concluídos</h3>
+        <span>{concluidos}</span>
+      </div>
+
+    </div>
+
+    <div className="appointments">
+      {agendamentos.length === 0 ? (
+        <h2 className="sem-agendamentos">
+          Nenhum agendamento para hoje.
+        </h2>
+      ) : (
+        agendamentos.map((agendamento) => (
+          <AppointmentCard
+            key={agendamento.id}
+            agendamento={agendamento}
+            confirmarAgendamento={confirmarAgendamento}
+            cancelarAgendamento={cancelarAgendamento}
+          />
+        ))
+      )}
+    </div>
+
+  </div>
+);
 }
 
 export default Dashboard;
