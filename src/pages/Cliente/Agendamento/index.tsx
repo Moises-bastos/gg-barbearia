@@ -67,6 +67,30 @@ function Agendamento() {
     return horarioEmMinutos > horarioAtual;
   });
 
+  function formatarTelefone(valor: string) {
+    const numeros = valor.replace(/\D/g, "");
+
+    if (numeros.length <= 2) {
+      return numeros;
+    }
+
+    if (numeros.length <= 7) {
+      return `(${numeros.slice(0, 2)}) ${numeros.slice(2)}`;
+    }
+
+    if (numeros.length <= 11) {
+      return `(${numeros.slice(0, 2)}) ${numeros.slice(
+        2,
+        7
+      )}-${numeros.slice(7, 11)}`;
+    }
+
+    return `(${numeros.slice(0, 2)}) ${numeros.slice(
+      2,
+      7
+    )}-${numeros.slice(7, 11)}`;
+  }
+
   async function confirmarAgendamento() {
 
     if (!nome.trim()) {
@@ -74,8 +98,10 @@ function Agendamento() {
       return;
     }
 
-    if (!telefone.trim()) {
-      aviso("Digite seu telefone.");
+    const telefoneLimpo = telefone.replace(/\D/g, "");
+
+    if (telefoneLimpo.length !== 11) {
+      aviso("Digite um telefone válido.");
       return;
     }
 
@@ -163,7 +189,10 @@ function Agendamento() {
             type="tel"
             placeholder="(99) 99999-9999"
             value={telefone}
-            onChange={(e) => setTelefone(e.target.value)}
+            maxLength={15}
+            onChange={(e) =>
+              setTelefone(formatarTelefone(e.target.value))
+            }
           />
         </div>
 

@@ -36,17 +36,17 @@ function AppRoutes() {
         />
 
         <Route
-  path="/historico"
-  element={
-    <ProtectedRoute>
-      <Historico />
-    </ProtectedRoute>
-  }
-/>
+          path="/historico"
+          element={
+            <ProtectedRoute>
+              <Historico />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
 
-    
+
   );
 }
 
