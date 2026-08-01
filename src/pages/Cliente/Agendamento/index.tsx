@@ -7,19 +7,24 @@ import { sucesso, erro, aviso } from "../../../utils/toast";
 
 function Agendamento() {
   const location = useLocation();
-
   const servico = location.state;
 
-  const hoje = new Date().toISOString().split("T")[0];
+  const dataHoje = new Date().toISOString().split("T")[0];
 
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
-  const [dataSelecionada, setDataSelecionada] = useState(hoje);
-  const [horarioSelecionado, setHorarioSelecionado] = useState("");
-  const [horariosOcupados, setHorariosOcupados] = useState<string[]>([]);
+  const [dataSelecionada, setDataSelecionada] =
+    useState(dataHoje);
+  const [horarioSelecionado, setHorarioSelecionado] =
+    useState("");
+  const [horariosOcupados, setHorariosOcupados] =
+    useState<string[]>([]);
+  const [dataBloqueada, setDataBloqueada] =
+    useState(false);
 
   useEffect(() => {
     buscarHorariosOcupados();
+    verificarDataBloqueada();
   }, [dataSelecionada]);
 
   if (!servico) {
@@ -43,29 +48,46 @@ function Agendamento() {
     );
   }
 
+  async function verificarDataBloqueada() {
+    const { data } = await supabase
+      .from("dias_bloqueados")
+      .select("id")
+      .eq("data", dataSelecionada)
+      .maybeSingle();
+
+    console.log("Resultado:", data);
+
+    setDataBloqueada(!!data);
+  }
+
   const agora = new Date();
+
+  const domingo =
+    new Date(dataSelecionada).getDay() === 0;
 
   const horarioAtual =
     agora.getHours() * 60 + agora.getMinutes();
 
-  const horariosDisponiveis = horarios.filter((horario) => {
+  const horariosDisponiveis = horarios.filter(
+    (horario) => {
+      if (horariosOcupados.includes(horario)) {
+        return false;
+      }
 
-    if (horariosOcupados.includes(horario)) {
-      return false;
+      const [hora, minuto] = horario
+        .split(":")
+        .map(Number);
+
+      const horarioEmMinutos =
+        hora * 60 + minuto;
+
+      if (dataSelecionada !== dataHoje) {
+        return true;
+      }
+
+      return horarioEmMinutos > horarioAtual;
     }
-
-    const [hora, minuto] = horario.split(":").map(Number);
-
-    const horarioEmMinutos = hora * 60 + minuto;
-
-    // Se não for hoje, mostra todos os horários
-    if (dataSelecionada !== hoje) {
-      return true;
-    }
-
-    // Se for hoje, remove horários que já passaram
-    return horarioEmMinutos > horarioAtual;
-  });
+  );
 
   function formatarTelefone(valor: string) {
     const numeros = valor.replace(/\D/g, "");
@@ -75,28 +97,63 @@ function Agendamento() {
     }
 
     if (numeros.length <= 7) {
-      return `(${numeros.slice(0, 2)}) ${numeros.slice(2)}`;
+      return `(${numeros.slice(
+        0,
+        2
+      )}) ${numeros.slice(2)}`;
     }
 
-    if (numeros.length <= 11) {
-      return `(${numeros.slice(0, 2)}) ${numeros.slice(
-        2,
-        7
-      )}-${numeros.slice(7, 11)}`;
-    }
-
-    return `(${numeros.slice(0, 2)}) ${numeros.slice(
+    return `(${numeros.slice(
+      0,
+      2
+    )}) ${numeros.slice(
       2,
       7
     )}-${numeros.slice(7, 11)}`;
   }
 
-  async function confirmarAgendamento() {
+  function validarNome(nome: string) {
 
-    if (!nome.trim()) {
-      aviso("Digite seu nome.");
+    const nomeLimpo = nome.trim();
+
+    // mínimo de 3 letras
+    if (nomeLimpo.length < 3) {
+      return "Digite um nome com pelo menos 3 letras.";
+    }
+
+    // máximo de 60 caracteres
+    if (nomeLimpo.length > 60) {
+      return "Nome muito grande.";
+    }
+
+    // apenas letras e espaços
+    const regex = /^[A-Za-zÀ-ÿ\s]+$/;
+
+    if (!regex.test(nomeLimpo)) {
+      return "O nome deve conter apenas letras.";
+    }
+
+    return null;
+  }
+
+  async function confirmarAgendamento() {
+    if (dataBloqueada) {
+      aviso("Esta data está bloqueada pelo barbeiro.");
       return;
     }
+
+    if (domingo) {
+      aviso("A GG Barbearia não funciona aos domingos.");
+      return;
+    }
+
+    const erroNome = validarNome(nome);
+
+    if (erroNome) {
+      aviso(erroNome);
+      return;
+    }
+
 
     const telefoneLimpo = telefone.replace(/\D/g, "");
 
@@ -152,7 +209,7 @@ function Agendamento() {
     setNome("");
     setTelefone("");
     setHorarioSelecionado("");
-    setDataSelecionada(hoje);
+    setDataSelecionada(dataHoje);
 
     buscarHorariosOcupados();
   }
@@ -178,7 +235,14 @@ function Agendamento() {
             type="text"
             placeholder="Digite seu nome"
             value={nome}
-            onChange={(e) => setNome(e.target.value)}
+            maxLength={60}
+            onChange={(e) => {
+
+              const valor = e.target.value.replace(/\s{2,}/g, " ");
+
+              setNome(valor);
+
+            }}
           />
         </div>
 
@@ -191,7 +255,9 @@ function Agendamento() {
             value={telefone}
             maxLength={15}
             onChange={(e) =>
-              setTelefone(formatarTelefone(e.target.value))
+              setTelefone(
+                formatarTelefone(e.target.value)
+              )
             }
           />
         </div>
@@ -202,18 +268,34 @@ function Agendamento() {
           <input
             type="date"
             value={dataSelecionada}
-            min={hoje}
-            onChange={(e) => setDataSelecionada(e.target.value)}
+            min={dataHoje}
+            onChange={(e) =>
+              setDataSelecionada(e.target.value)
+            }
           />
         </div>
 
         <h3>Escolha um horário</h3>
+        {domingo ? (
 
-        {horariosDisponiveis.length === 0 ? (
+          <p className="sem-horarios">
+            A GG Barbearia não funciona aos domingos.
+          </p>
+
+        ) : dataBloqueada ? (
+
+          <p className="sem-horarios">
+            O barbeiro não atenderá nesta data.
+          </p>
+
+        ) : horariosDisponiveis.length === 0 ? (
+
           <p className="sem-horarios">
             Não há horários disponíveis para esta data.
           </p>
+
         ) : (
+
           <div className="horarios">
             {horariosDisponiveis.map((horario) => (
               <button
@@ -224,17 +306,21 @@ function Agendamento() {
                     ? "horario ativo"
                     : "horario"
                 }
-                onClick={() => setHorarioSelecionado(horario)}
+                onClick={() =>
+                  setHorarioSelecionado(horario)
+                }
               >
                 {horario}
               </button>
             ))}
           </div>
+
         )}
 
         <button
           className="botao-confirmar"
           onClick={confirmarAgendamento}
+          disabled={domingo || dataBloqueada}
         >
           Confirmar Agendamento
         </button>

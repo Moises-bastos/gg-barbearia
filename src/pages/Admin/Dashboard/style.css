@@ -111,6 +111,38 @@
     margin-top: 60px;
 }
 
+.top-buttons{
+    display:flex;
+    gap:10px;
+    justify-content:flex-end;
+    width:100%;
+}
+
+.historico-btn,
+.logout{
+    padding:8px 14px;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:14px;
+    font-weight:600;
+}
+
+.historico-btn{
+    background:#D9C2A3;
+    color:#1E1F1A;
+}
+
+.logout{
+    background:#c0392b;
+    color:white;
+}
+
+.historico-btn:hover,
+.logout:hover{
+    transform:translateY(-2px);
+}
+
 /* ===== RESPONSIVIDADE ===== */
 
 @media (max-width: 900px) {

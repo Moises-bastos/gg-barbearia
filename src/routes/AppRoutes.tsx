@@ -8,6 +8,7 @@ import Dashboard from "../pages/Admin/Dashboard";
 
 import ProtectedRoute from "../components/ProtectedRoute";
 import Historico from "../pages/Admin/Historico";
+import DiasBloqueados from "../pages/Admin/DiasBloqueados";
 
 function AppRoutes() {
   return (
@@ -42,6 +43,10 @@ function AppRoutes() {
               <Historico />
             </ProtectedRoute>
           }
+        />
+        <Route
+          path="/dias-bloqueados"
+          element={<DiasBloqueados />}
         />
       </Routes>
     </BrowserRouter>

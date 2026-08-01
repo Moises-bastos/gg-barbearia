@@ -99,21 +99,32 @@ return (
 
     <div className="dashboard-header">
 
-      <button
-        className="historico-btn"
-        onClick={() => navigate("/historico")}
-      >
-       Histórico
-      </button>
+  <div className="top-buttons">
 
-      <button
-        className="logout"
-        onClick={logout}
-      >
-       Sair
-      </button>
+    <button
+      className="historico-btn"
+      onClick={() => navigate("/dias-bloqueados")}
+    >
+      📅 Dias Bloqueados
+    </button>
 
-    </div>
+    <button
+      className="historico-btn"
+      onClick={() => navigate("/historico")}
+    >
+      📚 Histórico
+    </button>
+
+    <button
+      className="logout"
+      onClick={logout}
+    >
+      🚪 Sair
+    </button>
+
+  </div>
+
+</div>
 
     <h1 className="dashboard-title">
       Painel do Barbeiro

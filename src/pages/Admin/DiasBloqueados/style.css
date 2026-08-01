@@ -1,0 +1,59 @@
+.dias-page{
+    min-height:100vh;
+    background:#26241f;
+    color:white;
+    padding:40px;
+}
+
+.dias-page h1{
+    text-align:center;
+    margin-bottom:35px;
+    color:#E6D2B5;
+}
+
+.novo-dia{
+    display:flex;
+    gap:15px;
+    margin-bottom:30px;
+    flex-wrap:wrap;
+}
+
+.novo-dia input{
+    padding:10px;
+    border-radius:8px;
+    border:none;
+}
+
+.novo-dia button{
+    padding:10px 20px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    background:#D9C2A3;
+    font-weight:bold;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th,
+td{
+    padding:15px;
+    border-bottom:1px solid #555;
+}
+
+th{
+    color:#E6D2B5;
+    text-align:left;
+}
+
+.remover{
+    background:#c0392b;
+    color:white;
+    border:none;
+    padding:8px 15px;
+    border-radius:8px;
+    cursor:pointer;
+}
