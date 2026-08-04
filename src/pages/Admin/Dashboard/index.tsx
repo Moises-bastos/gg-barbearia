@@ -112,14 +112,14 @@ return (
       className="historico-btn"
       onClick={() => navigate("/historico")}
     >
-      📚 Histórico
+       Histórico
     </button>
 
     <button
       className="logout"
       onClick={logout}
     >
-      🚪 Sair
+       Sair
     </button>
 
   </div>
