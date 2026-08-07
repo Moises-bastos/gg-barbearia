@@ -72,9 +72,23 @@ function Agendamento() {
   const horarioAtual =
     agora.getHours() * 60 + agora.getMinutes();
 
+  const diaSemana = new Date(dataSelecionada).getDay();
+  // 0 = domingo, 6 = sábado
+
+  const horariosAlmoco =
+    diaSemana === 6
+      ? ["12:00", "12:30", "13:00"] // sábado
+      : ["12:00", "12:30", "13:00", "13:30"]; // segunda a sexta
+
   const horariosDisponiveis = horarios.filter(
     (horario) => {
+      // horário já agendado
       if (horariosOcupados.includes(horario)) {
+        return false;
+      }
+
+      // horário de almoço
+      if (horariosAlmoco.includes(horario)) {
         return false;
       }
 
@@ -85,10 +99,12 @@ function Agendamento() {
       const horarioEmMinutos =
         hora * 60 + minuto;
 
+      // datas futuras mostram todos os horários disponíveis
       if (dataSelecionada !== dataHoje) {
         return true;
       }
 
+      // hoje só mostra horários futuros
       return horarioEmMinutos > horarioAtual;
     }
   );
