@@ -20,7 +20,7 @@ if (telefone.length !== 11) {
     "pt-BR"
   );
 
- const mensagem = `Olá ${agendamento.nome}! 👋
+ const mensagem = `Olá ${agendamento.nome}! 
 
 Seu agendamento foi confirmado com sucesso!
 
