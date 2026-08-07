@@ -4,6 +4,7 @@ import { supabase } from "../../../lib/supabase";
 import AppointmentCard from "../../../components/AppointmentCard";
 import { useNavigate } from "react-router-dom";
 import { sucesso, erro } from "../../../utils/toast";
+import { enviarWhatsApp } from "../../../utils/whatsapp";
 
 type Agendamento = {
   id: number;
@@ -94,95 +95,106 @@ function Dashboard() {
     navigate("/login");
   }
 
-return (
-  <div className="dashboard">
+  function enviarMensagem(agendamento: Agendamento) {
+    enviarWhatsApp({
+      nome: agendamento.nome,
+      telefone: agendamento.telefone,
+      servico: agendamento.servico,
+      data: agendamento.data,
+      horario: agendamento.horario,
+    });
+  }
 
-    <div className="dashboard-header">
+  return (
+    <div className="dashboard">
 
-  <div className="top-buttons">
+      <div className="dashboard-header">
 
-    <button
-      className="historico-btn"
-      onClick={() => navigate("/dias-bloqueados")}
-    >
-      📅 Dias Bloqueados
-    </button>
+        <div className="top-buttons">
 
-    <button
-      className="historico-btn"
-      onClick={() => navigate("/historico")}
-    >
-       Histórico
-    </button>
+          <button
+            className="historico-btn"
+            onClick={() => navigate("/dias-bloqueados")}
+          >
+            📅 Dias Bloqueados
+          </button>
 
-    <button
-      className="logout"
-      onClick={logout}
-    >
-       Sair
-    </button>
+          <button
+            className="historico-btn"
+            onClick={() => navigate("/historico")}
+          >
+            Histórico
+          </button>
 
-  </div>
+          <button
+            className="logout"
+            onClick={logout}
+          >
+            Sair
+          </button>
 
-</div>
+        </div>
 
-    <h1 className="dashboard-title">
-      Painel do Barbeiro
-    </h1>
-
-    <p className="data-hoje">
-      Agendamentos de hoje -{" "}
-      {new Date().toLocaleDateString("pt-BR")}
-    </p>
-
-    <div className="dashboard-cards">
-
-      <div className="dashboard-card">
-        <h3>👥 Clientes</h3>
-        <span>{totalClientes}</span>
       </div>
 
-      <div className="dashboard-card">
-        <h3>💰 Receita</h3>
-        <span>
-          {receita.toLocaleString("pt-BR", {
-            style: "currency",
-            currency: "BRL",
-          })}
-        </span>
+      <h1 className="dashboard-title">
+        Painel do Barbeiro
+      </h1>
+
+      <p className="data-hoje">
+        Agendamentos de hoje -{" "}
+        {new Date().toLocaleDateString("pt-BR")}
+      </p>
+
+      <div className="dashboard-cards">
+
+        <div className="dashboard-card">
+          <h3>👥 Clientes</h3>
+          <span>{totalClientes}</span>
+        </div>
+
+        <div className="dashboard-card">
+          <h3>💰 Receita</h3>
+          <span>
+            {receita.toLocaleString("pt-BR", {
+              style: "currency",
+              currency: "BRL",
+            })}
+          </span>
+        </div>
+
+        <div className="dashboard-card">
+          <h3>🟡 Pendentes</h3>
+          <span>{pendentes}</span>
+        </div>
+
+        <div className="dashboard-card">
+          <h3>🟢 Concluídos</h3>
+          <span>{concluidos}</span>
+        </div>
+
       </div>
 
-      <div className="dashboard-card">
-        <h3>🟡 Pendentes</h3>
-        <span>{pendentes}</span>
-      </div>
-
-      <div className="dashboard-card">
-        <h3>🟢 Concluídos</h3>
-        <span>{concluidos}</span>
+      <div className="appointments">
+        {agendamentos.length === 0 ? (
+          <h2 className="sem-agendamentos">
+            Nenhum agendamento para hoje.
+          </h2>
+        ) : (
+          agendamentos.map((agendamento) => (
+            <AppointmentCard
+              key={agendamento.id}
+              agendamento={agendamento}
+              confirmarAgendamento={confirmarAgendamento}
+              cancelarAgendamento={cancelarAgendamento}
+              enviarMensagem={enviarMensagem}
+            />
+          ))
+        )}
       </div>
 
     </div>
-
-    <div className="appointments">
-      {agendamentos.length === 0 ? (
-        <h2 className="sem-agendamentos">
-          Nenhum agendamento para hoje.
-        </h2>
-      ) : (
-        agendamentos.map((agendamento) => (
-          <AppointmentCard
-            key={agendamento.id}
-            agendamento={agendamento}
-            confirmarAgendamento={confirmarAgendamento}
-            cancelarAgendamento={cancelarAgendamento}
-          />
-        ))
-      )}
-    </div>
-
-  </div>
-);
+  );
 }
 
 export default Dashboard;

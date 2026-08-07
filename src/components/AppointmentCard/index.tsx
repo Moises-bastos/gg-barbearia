@@ -15,12 +15,14 @@ type Props = {
   agendamento: Agendamento;
   confirmarAgendamento: (id: number) => void;
   cancelarAgendamento: (id: number) => void;
+  enviarMensagem: (agendamento: Agendamento) => void;
 };
 
 function AppointmentCard({
   agendamento,
   confirmarAgendamento,
   cancelarAgendamento,
+  enviarMensagem,
 }: Props) {
   return (
     <div className="appointment-card">
@@ -63,6 +65,13 @@ function AppointmentCard({
             onClick={() => cancelarAgendamento(agendamento.id)}
           >
             Cancelar
+          </button>
+
+          <button
+            className="whatsapp"
+            onClick={() => enviarMensagem(agendamento)}
+          >
+            📲 WhatsApp
           </button>
         </div>
       )}
