@@ -5,6 +5,10 @@ import { horarios } from "../../../data/horarios";
 import { supabase } from "../../../lib/supabase";
 import { sucesso, erro, aviso } from "../../../utils/toast";
 
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { ptBR } from "date-fns/locale";
+
 function Agendamento() {
   const location = useLocation();
   const servico = location.state;
@@ -265,13 +269,19 @@ function Agendamento() {
         <div className="input-group">
           <label>Data</label>
 
-          <input
-            type="date"
-            value={dataSelecionada}
-            min={dataHoje}
-            onChange={(e) =>
-              setDataSelecionada(e.target.value)
-            }
+          <DatePicker
+            selected={new Date(dataSelecionada)}
+            onChange={(date: Date | null) => {
+              if (!date) return;
+
+              const data = date.toISOString().split("T")[0];
+              setDataSelecionada(data);
+            }}
+            minDate={new Date()}
+            locale={ptBR}
+            dateFormat="dd/MM/yyyy"
+            placeholderText="Selecione uma data"
+            filterDate={(date) => date.getDay() !== 0}
           />
         </div>
 
