@@ -36,23 +36,25 @@ function Login() {
     navigate("/dashboard");
   }
 
-  async function verificarMensalidade() {
-    const { data, error } = await supabase
-      .from("assinatura")
-      .select("vence_em")
-      .eq("id", 1)
-      .single();
+async function verificarMensalidade() {
+  const { data, error } = await supabase
+    .from("assinatura")
+    .select("vence_em")
+    .eq("id", 1)
+    .single();
 
-    if (error) {
-      console.log("Erro ao verificar mensalidade:", error);
-      return false;
-    }
-
-    const hoje = new Date();
-    const vencimento = new Date(data.vence_em);
-
-    return hoje <= vencimento;
+  if (error) {
+    console.log("Erro ao verificar mensalidade:", error);
+    return false;
   }
+
+  const hoje = new Date().toISOString().split("T")[0];
+
+  console.log("Hoje:", hoje);
+  console.log("Vencimento:", data.vence_em);
+
+  return hoje <= data.vence_em;
+}
 
   return (
     <div className="login">
