@@ -1,0 +1,99 @@
+.mensalidade {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 20px;
+  text-align: center;
+  background: #111;
+  color: #fff;
+}
+
+.mensalidade h1 {
+  margin-bottom: 10px;
+  font-size: 32px;
+}
+
+.mensalidade h2 {
+  margin-bottom: 10px;
+  color: #f5c542;
+}
+
+.mensalidade > p {
+  max-width: 500px;
+  color: #ccc;
+  margin-bottom: 25px;
+}
+
+.pagamento {
+  width: 100%;
+  max-width: 450px;
+  padding: 30px;
+  border-radius: 12px;
+  background: #1c1c1c;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.pagamento h3 {
+  margin-top: 15px;
+  margin-bottom: 10px;
+}
+
+.pagamento strong {
+  display: block;
+  font-size: 30px;
+  margin-bottom: 25px;
+}
+
+.pix {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.pix span {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  border-radius: 8px;
+  background: #292929;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pix button {
+  width: 100%;
+  padding: 12px 15px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.pagamento > p:last-child {
+  color: #aaa;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+@media (max-width: 500px) {
+  .mensalidade h1 {
+    font-size: 26px;
+  }
+
+  .pagamento {
+    padding: 20px;
+  }
+
+  .pix {
+    flex-direction: column;
+  }
+
+  .pix span,
+  .pix button {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}

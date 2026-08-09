@@ -10,6 +10,8 @@ import ProtectedRoute from "../components/ProtectedRoute";
 import Historico from "../pages/Admin/Historico";
 import DiasBloqueados from "../pages/Admin/DiasBloqueados";
 
+import Mensalidade from "../pages/Mensalidade/Mensalidade";
+
 function AppRoutes() {
   return (
     <BrowserRouter>
@@ -24,6 +26,11 @@ function AppRoutes() {
         <Route
           path="/login"
           element={<Login />}
+        />
+
+        <Route
+          path="/mensalidade"
+          element={<Mensalidade />}
         />
 
         <Route
@@ -48,6 +55,7 @@ function AppRoutes() {
           path="/dias-bloqueados"
           element={<DiasBloqueados />}
         />
+
       </Routes>
     </BrowserRouter>
 
