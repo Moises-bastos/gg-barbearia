@@ -25,6 +25,8 @@ function Agendamento() {
     useState<string[]>([]);
   const [dataBloqueada, setDataBloqueada] =
     useState(false);
+  const [linkCancelamento, setLinkCancelamento] =
+    useState("");
 
   useEffect(() => {
     buscarHorariosOcupados();
@@ -200,29 +202,42 @@ function Agendamento() {
       return;
     }
 
-    const { error: insertError } = await supabase
-      .from("agendamentos")
-      .insert([
-        {
-          nome,
-          telefone,
-          servico: servico.nome,
-          preco: Number(
-            servico.preco
-              .replace("R$", "")
-              .replace(",", ".")
-          ),
-          horario: horarioSelecionado,
-          data: dataSelecionada,
-          status: "Pendente",
-        },
-      ]);
-
+    const { data: novoAgendamento, error: insertError } =
+      await supabase
+        .from("agendamentos")
+        .insert([
+          {
+            nome,
+            telefone,
+            servico: servico.nome,
+            preco: Number(
+              servico.preco
+                .replace("R$", "")
+                .replace(",", ".")
+            ),
+            horario: horarioSelecionado,
+            data: dataSelecionada,
+            status: "Pendente",
+          },
+        ])
+        .select("id")
+        .single();
     if (insertError) {
       console.log(insertError);
       erro("Erro ao salvar agendamento.");
       return;
     }
+
+    if (!novoAgendamento) {
+      erro("Não foi possível identificar o agendamento.");
+      return;
+    }
+  const link =
+  `${window.location.origin}/cancelar-agendamento?id=${novoAgendamento.id}`;
+
+console.log("LINK:", link);
+
+setLinkCancelamento(link);
 
     sucesso("Agendamento realizado com sucesso!");
 
@@ -350,6 +365,22 @@ function Agendamento() {
         >
           Confirmar Agendamento
         </button>
+
+        {linkCancelamento && (
+          <div className="cancelamento">
+            <p>
+              Precisa cancelar seu agendamento?
+            </p>
+
+            <a
+              href={linkCancelamento}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Cancelar agendamento
+            </a>
+          </div>
+        )}
 
       </div>
     </div>

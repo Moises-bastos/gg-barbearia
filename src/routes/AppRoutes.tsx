@@ -9,6 +9,7 @@ import Dashboard from "../pages/Admin/Dashboard";
 import ProtectedRoute from "../components/ProtectedRoute";
 import Historico from "../pages/Admin/Historico";
 import DiasBloqueados from "../pages/Admin/DiasBloqueados";
+import CancelarAgendamento from "../pages/Cliente/CancelarAgendamento";
 
 import Mensalidade from "../pages/Mensalidade/Mensalidade";
 
@@ -21,6 +22,11 @@ function AppRoutes() {
         <Route
           path="/agendamento"
           element={<Agendamento />}
+        />
+
+        <Route
+          path="/cancelar-agendamento"
+          element={<CancelarAgendamento />}
         />
 
         <Route
