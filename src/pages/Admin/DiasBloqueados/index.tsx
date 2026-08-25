@@ -31,34 +31,52 @@ function DiasBloqueados() {
 
     setDias(data as DiaBloqueado[]);
   }
-
-  async function bloquearData() {
-    if (!data) {
-      erro("Escolha uma data.");
-      return;
-    }
-
-    const { error } = await supabase
-      .from("dias_bloqueados")
-      .insert([
-        {
-          data,
-          motivo,
-        },
-      ]);
-
-    if (error) {
-      erro("Essa data já está bloqueada.");
-      return;
-    }
-
-    sucesso("Data bloqueada!");
-
-    setData("");
-    setMotivo("");
-
-    buscarDias();
+async function bloquearData() {
+  if (!data) {
+    erro("Escolha uma data.");
+    return;
   }
+
+  const { data: existente, error: erroBusca } = await supabase
+    .from("dias_bloqueados")
+    .select("id")
+    .eq("data", data)
+    .maybeSingle();
+
+  if (erroBusca) {
+    console.log("Erro ao verificar data:", erroBusca);
+    erro("Não foi possível verificar a data.");
+    return;
+  }
+
+  if (existente) {
+    erro("Essa data já está bloqueada.");
+    return;
+  }
+
+  const { error } = await supabase
+    .from("dias_bloqueados")
+    .insert([
+      {
+        data,
+        motivo,
+      },
+    ]);
+
+  if (error) {
+    console.log("Erro ao bloquear data:", error);
+
+    erro("Não foi possível bloquear a data.");
+    return;
+  }
+
+  sucesso("Data bloqueada!");
+
+  setData("");
+  setMotivo("");
+
+  buscarDias();
+}
 
   async function remover(id: number) {
     await supabase
