@@ -1,56 +1,114 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 
 function NotificacaoAgendamento() {
-  useEffect(() => {
-    // Pede permissão para mostrar notificações
-    async function solicitarPermissao() {
-      if (!("Notification" in window)) {
-        console.log(
-          "Este navegador não suporta notificações."
-        );
-        return;
-      }
+  const [permissao, setPermissao] = useState(
+    "Notification" in window
+      ? Notification.permission
+      : "unsupported"
+  );
 
-      if (Notification.permission === "default") {
-        await Notification.requestPermission();
-      }
+  async function ativarNotificacoes() {
+    if (!("Notification" in window)) {
+      alert(
+        "Seu navegador não suporta notificações."
+      );
+      return;
     }
 
-    solicitarPermissao();
+    const resultado =
+      await Notification.requestPermission();
 
-    // Escuta novos agendamentos
-    const canal = supabase
-      .channel("novos-agendamentos")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "agendamentos",
-        },
-        (payload) => {
-          const agendamento = payload.new;
+    setPermissao(resultado);
 
-          // Não mostra notificação se não houver permissão
-          if (Notification.permission !== "granted") {
-            return;
-          }
+    if (resultado === "granted") {
+      new Notification("Notificações ativadas! 🔔", {
+        body: "Agora você receberá avisos de novos agendamentos.",
+      });
+    }
+  }
 
-          new Notification("Novo agendamento! ✂️", {
-            body: `${agendamento.nome} agendou ${agendamento.servico} para ${agendamento.data} às ${agendamento.horario}.`,
-          });
-        }
-      )
-      .subscribe();
+  useEffect(() => {
+    if (!("Notification" in window)) {
+      return;
+    }
 
-    // Limpa o canal quando o componente sair da tela
+    if (Notification.permission !== "granted") {
+      return;
+    }
+
+const canal = supabase
+  .channel("novos-agendamentos")
+  .on(
+    "postgres_changes",
+    {
+      event: "INSERT",
+      schema: "public",
+      table: "agendamentos",
+    },
+    (payload) => {
+      console.log(
+        "🔔 NOVO AGENDAMENTO RECEBIDO:",
+        payload
+      );
+
+      const agendamento = payload.new;
+
+      new Notification("Novo agendamento! ✂️", {
+        body: `${agendamento.nome} agendou ${agendamento.servico} para ${agendamento.data} às ${agendamento.horario}.`,
+      });
+    }
+  )
+  .subscribe((status) => {
+    console.log(
+      "📡 Status do Realtime:",
+      status
+    );
+  });
+
     return () => {
       supabase.removeChannel(canal);
     };
-  }, []);
+  }, [permissao]);
 
-  return null;
+  if (permissao === "unsupported") {
+    return null;
+  }
+
+  if (permissao === "granted") {
+    return null;
+  }
+
+  if (permissao === "denied") {
+    return (
+      <div className="notificacao-aviso">
+        <span>
+          🔕 As notificações estão bloqueadas.
+        </span>
+
+        <small>
+          Permita as notificações nas configurações
+          do navegador.
+        </small>
+      </div>
+    );
+  }
+
+  return (
+    <div className="notificacao-aviso">
+      <span>
+        🔔 Ative as notificações para receber
+        novos agendamentos.
+      </span>
+
+      <button
+        onClick={ativarNotificacoes}
+        type="button"
+      >
+        Ativar notificações
+      </button>
+    </div>
+  );
 }
 
 export default NotificacaoAgendamento;
