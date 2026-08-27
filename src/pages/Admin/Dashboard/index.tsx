@@ -5,6 +5,7 @@ import AppointmentCard from "../../../components/AppointmentCard";
 import { useNavigate } from "react-router-dom";
 import { sucesso, erro } from "../../../utils/toast";
 import { enviarWhatsApp } from "../../../utils/whatsapp";
+import NotificacaoAgendamento from "../../../components/notificação/NotificacaoAgendamento";
 
 type Agendamento = {
   id: number;
@@ -107,6 +108,8 @@ function Dashboard() {
 
   return (
     <div className="dashboard">
+
+       <NotificacaoAgendamento />
 
       <div className="dashboard-header">
 
