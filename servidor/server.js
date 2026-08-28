@@ -3,13 +3,15 @@ import webpush from "web-push";
 import dotenv from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 
+
+
 dotenv.config();
 
 const app = express();
 
 app.use(express.json());
 
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
 // ========================================
 // SUPABASE
@@ -269,6 +271,6 @@ monitorarAgendamentos();
 
 app.listen(PORT, () => {
   console.log(
-    `Servidor de notificações rodando em http://localhost:${PORT}`
+    `Servidor de notificações rodando na porta ${PORT}`
   );
 });
