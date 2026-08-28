@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
+import { ativarPushNotifications } from "../../utils/pushNotifications";
 
 function NotificacaoAgendamento() {
   const [permissao, setPermissao] = useState(
@@ -10,9 +11,7 @@ function NotificacaoAgendamento() {
 
   async function ativarNotificacoes() {
     if (!("Notification" in window)) {
-      alert(
-        "Seu navegador não suporta notificações."
-      );
+      alert("Seu navegador não suporta notificações.");
       return;
     }
 
@@ -23,8 +22,12 @@ function NotificacaoAgendamento() {
 
     if (resultado === "granted") {
       new Notification("Notificações ativadas! 🔔", {
-        body: "Agora você receberá avisos de novos agendamentos.",
+        body:
+          "Agora você receberá avisos de novos agendamentos.",
       });
+
+      // Cria e salva a Push Subscription
+      await ativarPushNotifications();
     }
   }
 
@@ -37,34 +40,40 @@ function NotificacaoAgendamento() {
       return;
     }
 
-const canal = supabase
-  .channel("novos-agendamentos")
-  .on(
-    "postgres_changes",
-    {
-      event: "INSERT",
-      schema: "public",
-      table: "agendamentos",
-    },
-    (payload) => {
-      console.log(
-        "🔔 NOVO AGENDAMENTO RECEBIDO:",
-        payload
-      );
+    // IMPORTANTE:
+    // Mesmo que a permissão já esteja concedida,
+    // garante que a Push Subscription seja criada
+    // e salva no Supabase.
+    ativarPushNotifications();
 
-      const agendamento = payload.new;
+    const canal = supabase
+      .channel("novos-agendamentos")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "agendamentos",
+        },
+        (payload) => {
+          console.log(
+            "🔔 NOVO AGENDAMENTO RECEBIDO:",
+            payload
+          );
 
-      new Notification("Novo agendamento! ✂️", {
-        body: `${agendamento.nome} agendou ${agendamento.servico} para ${agendamento.data} às ${agendamento.horario}.`,
+          const agendamento = payload.new;
+
+          new Notification("Novo agendamento! ✂️", {
+            body: `${agendamento.nome} agendou ${agendamento.servico} para ${agendamento.data} às ${agendamento.horario}.`,
+          });
+        }
+      )
+      .subscribe((status) => {
+        console.log(
+          "📡 Status do Realtime:",
+          status
+        );
       });
-    }
-  )
-  .subscribe((status) => {
-    console.log(
-      "📡 Status do Realtime:",
-      status
-    );
-  });
 
     return () => {
       supabase.removeChannel(canal);
