@@ -59,4 +59,22 @@ export const servicos = [
     preco: "R$ 60,00",
     duracao: "70 min",
   },
+  {
+    id: 11,
+    nome: "Corte + sobrancelhas",
+    preco: "R$ 20,00",
+    duracao: "30 min",
+  },
+  {
+    id: 12,
+    nome: "Corte + pigmentação",
+    preco: "R$ 25,00",
+    duracao: "35 min",
+  },
+  {
+    id: 13,
+    nome: "Corte + pigmentação + sobrancelhas",
+    preco: "R$ 30,00",
+    duracao: "40 min",
+  },
 ];
