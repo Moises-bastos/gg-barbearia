@@ -20,29 +20,56 @@ type Agendamento = {
 
 function Dashboard() {
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
+
+  const [dataSelecionada, setDataSelecionada] = useState(
+    new Date().toISOString().split("T")[0]
+  );
+
   const navigate = useNavigate();
 
   useEffect(() => {
     buscarAgendamentos();
-  }, []);
+  }, [dataSelecionada]);
 
   async function buscarAgendamentos() {
-    const hoje = new Date().toISOString().split("T")[0];
-
     const { data, error } = await supabase
       .from("agendamentos")
       .select("*")
-      .eq("data", hoje)
+      .eq("data", dataSelecionada)
       .order("horario");
 
     if (error) {
       console.log(error);
+      erro("Erro ao buscar agendamentos.");
       return;
     }
 
     if (data) {
       setAgendamentos(data as Agendamento[]);
     }
+  }
+
+  function mudarData(dias: number) {
+    const data = new Date(`${dataSelecionada}T12:00:00`);
+
+    data.setDate(data.getDate() + dias);
+
+    const novaData =
+      data.toISOString().split("T")[0];
+
+    setDataSelecionada(novaData);
+  }
+
+  function voltarParaHoje() {
+    setDataSelecionada(
+      new Date().toISOString().split("T")[0]
+    );
+  }
+
+  function formatarData(data: string) {
+    const [ano, mes, dia] = data.split("-");
+
+    return `${dia}/${mes}/${ano}`;
   }
 
   const totalClientes = agendamentos.length;
@@ -57,7 +84,10 @@ function Dashboard() {
 
   const receita = agendamentos
     .filter((a) => a.status === "Concluído")
-    .reduce((total, a) => total + a.preco, 0);
+    .reduce(
+      (total, a) => total + Number(a.preco),
+      0
+    );
 
   async function confirmarAgendamento(id: number) {
     const { error } = await supabase
@@ -71,11 +101,18 @@ function Dashboard() {
     }
 
     sucesso("Agendamento confirmado!");
+
     buscarAgendamentos();
   }
 
   async function cancelarAgendamento(id: number) {
-    if (!window.confirm("Deseja cancelar este agendamento?")) return;
+    if (
+      !window.confirm(
+        "Deseja cancelar este agendamento?"
+      )
+    ) {
+      return;
+    }
 
     const { error } = await supabase
       .from("agendamentos")
@@ -88,15 +125,19 @@ function Dashboard() {
     }
 
     sucesso("Agendamento cancelado!");
+
     buscarAgendamentos();
   }
 
   async function logout() {
     await supabase.auth.signOut();
+
     navigate("/login");
   }
 
-  function enviarMensagem(agendamento: Agendamento) {
+  function enviarMensagem(
+    agendamento: Agendamento
+  ) {
     enviarWhatsApp({
       nome: agendamento.nome,
       telefone: agendamento.telefone,
@@ -109,7 +150,7 @@ function Dashboard() {
   return (
     <div className="dashboard">
 
-       <NotificacaoAgendamento />
+      <NotificacaoAgendamento />
 
       <div className="dashboard-header">
 
@@ -117,14 +158,18 @@ function Dashboard() {
 
           <button
             className="historico-btn"
-            onClick={() => navigate("/dias-bloqueados")}
+            onClick={() =>
+              navigate("/dias-bloqueados")
+            }
           >
             📅 Dias Bloqueados
           </button>
 
           <button
             className="historico-btn"
-            onClick={() => navigate("/historico")}
+            onClick={() =>
+              navigate("/historico")
+            }
           >
             Histórico
           </button>
@@ -144,10 +189,72 @@ function Dashboard() {
         Painel do Barbeiro
       </h1>
 
+      {/* =============================== */}
+      {/* SELETOR DE DATA */}
+      {/* =============================== */}
+
+      <div className="seletor-data">
+
+        <button
+          type="button"
+          onClick={() => mudarData(-1)}
+        >
+          ◀
+        </button>
+
+        <div className="data-atual">
+
+          <span>
+            📅 Data selecionada
+          </span>
+
+          <strong>
+            {formatarData(dataSelecionada)}
+          </strong>
+
+        </div>
+
+        <button
+          type="button"
+          onClick={() => mudarData(1)}
+        >
+          ▶
+        </button>
+
+      </div>
+
+      <div className="escolher-data">
+
+        <label htmlFor="data">
+          Escolher outra data:
+        </label>
+
+        <input
+          id="data"
+          type="date"
+          value={dataSelecionada}
+          onChange={(e) =>
+            setDataSelecionada(e.target.value)
+          }
+        />
+
+        <button
+          type="button"
+          onClick={voltarParaHoje}
+        >
+          Hoje
+        </button>
+
+      </div>
+
       <p className="data-hoje">
-        Agendamentos de hoje -{" "}
-        {new Date().toLocaleDateString("pt-BR")}
+        Agendamentos de{" "}
+        {formatarData(dataSelecionada)}
       </p>
+
+      {/* =============================== */}
+      {/* CARDS */}
+      {/* =============================== */}
 
       <div className="dashboard-cards">
 
@@ -158,6 +265,7 @@ function Dashboard() {
 
         <div className="dashboard-card">
           <h3>💰 Receita</h3>
+
           <span>
             {receita.toLocaleString("pt-BR", {
               style: "currency",
@@ -168,32 +276,59 @@ function Dashboard() {
 
         <div className="dashboard-card">
           <h3>🟡 Pendentes</h3>
-          <span>{pendentes}</span>
+
+          <span>
+            {pendentes}
+          </span>
         </div>
 
         <div className="dashboard-card">
           <h3>🟢 Concluídos</h3>
-          <span>{concluidos}</span>
+
+          <span>
+            {concluidos}
+          </span>
         </div>
 
       </div>
 
+      {/* =============================== */}
+      {/* AGENDAMENTOS */}
+      {/* =============================== */}
+
       <div className="appointments">
+
         {agendamentos.length === 0 ? (
+
           <h2 className="sem-agendamentos">
-            Nenhum agendamento para hoje.
+            Nenhum agendamento para{" "}
+            {formatarData(dataSelecionada)}.
           </h2>
+
         ) : (
-          agendamentos.map((agendamento) => (
-            <AppointmentCard
-              key={agendamento.id}
-              agendamento={agendamento}
-              confirmarAgendamento={confirmarAgendamento}
-              cancelarAgendamento={cancelarAgendamento}
-              enviarMensagem={enviarMensagem}
-            />
-          ))
+
+          agendamentos.map(
+            (agendamento) => (
+
+              <AppointmentCard
+                key={agendamento.id}
+                agendamento={agendamento}
+                confirmarAgendamento={
+                  confirmarAgendamento
+                }
+                cancelarAgendamento={
+                  cancelarAgendamento
+                }
+                enviarMensagem={
+                  enviarMensagem
+                }
+              />
+
+            )
+          )
+
         )}
+
       </div>
 
     </div>
