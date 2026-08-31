@@ -1,269 +1,264 @@
-.cancelamento-page {
-  min-height: 100vh;
-  background: #26241f;
+.cancelar-agendamento-page {
+    min-height: 100vh;
+    width: 100%;
 
-  display: flex;
-  justify-content: center;
-  align-items: center;
+    background: #26241f;
 
-  padding: 24px;
+    display: flex;
+    justify-content: center;
+
+    padding: 100px 20px 50px;
 }
+
+.cancelar-agendamento-container {
+    width: 100%;
+    max-width: 800px;
+}
+
+/* ===== TÍTULO ===== */
+
+.cancelar-agendamento-container h1 {
+    color: #E6D2B5;
+    text-align: center;
+
+    font-size: 38px;
+
+    margin-bottom: 10px;
+}
+
+.cancelar-descricao {
+    color: #fff;
+    text-align: center;
+
+    font-size: 16px;
+
+    margin-bottom: 35px;
+}
+
+/* ===== BUSCA ===== */
+
+.buscar-cancelamento {
+    display: flex;
+
+    gap: 12px;
+
+    width: 100%;
+
+    margin-bottom: 40px;
+}
+
+.buscar-cancelamento input {
+    flex: 1;
+
+    padding: 14px 16px;
+
+    border: 1px solid #444;
+
+    border-radius: 8px;
+
+    background: #1d1d1d;
+
+    color: #fff;
+
+    font-size: 16px;
+
+    outline: none;
+}
+
+.buscar-cancelamento input:focus {
+    border-color: #D9C2A3;
+}
+
+.buscar-cancelamento input::placeholder {
+    color: #888;
+}
+
+.buscar-cancelamento button {
+    background: #D9C2A3;
+
+    color: #1E1F1A;
+
+    border: none;
+
+    border-radius: 8px;
+
+    padding: 0 20px;
+
+    font-size: 15px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition: 0.3s;
+}
+
+.buscar-cancelamento button:hover {
+    transform: translateY(-2px);
+
+    opacity: 0.9;
+}
+
+.buscar-cancelamento button:disabled {
+    opacity: 0.6;
+
+    cursor: not-allowed;
+
+    transform: none;
+}
+
+/* ===== RESULTADO ===== */
+
+.resultado-cancelamento h2 {
+    color: #E6D2B5;
+
+    text-align: center;
+
+    margin-bottom: 25px;
+
+    font-size: 25px;
+}
+
+/* ===== LISTA ===== */
+
+.lista-cancelamentos {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(280px, 1fr)
+        );
+
+    gap: 20px;
+}
+
+/* ===== CARD ===== */
 
 .cancelamento-card {
-  width: 100%;
-  max-width: 480px;
+    background: #1d1d1d;
 
-  background: #fff;
+    border: 1px solid #333;
 
-  border-radius: 18px;
+    border-radius: 12px;
 
-  padding: 32px;
+    padding: 25px;
 
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+    transition: 0.3s;
 }
 
-.cancelamento-card h1 {
-  margin: 0;
+.cancelamento-card:hover {
+    transform: translateY(-3px);
 
-  text-align: center;
-
-  color: #26241f;
-
-  font-size: 28px;
+    border-color: #D9C2A3;
 }
 
-.cancelamento-subtitulo {
-  text-align: center;
+.cancelamento-card h3 {
+    color: #E6D2B5;
 
-  color: #777;
+    font-size: 22px;
 
-  margin: 10px 0 28px;
-
-  font-size: 14px;
+    margin-bottom: 20px;
 }
 
-.dados-agendamento {
-  display: grid;
+/* ===== DADOS ===== */
 
-  grid-template-columns: 1fr 1fr;
+.dados-cancelamento {
+    display: flex;
 
-  gap: 14px;
+    flex-direction: column;
 
-  margin-bottom: 28px;
+    gap: 10px;
+
+    margin-bottom: 25px;
 }
 
-.dado {
-  background: #f5f3ef;
+.dados-cancelamento p {
+    color: #fff;
 
-  border-radius: 12px;
+    margin: 0;
 
-  padding: 14px;
+    font-size: 15px;
 }
 
-.dado span {
-  display: block;
-
-  color: #777;
-
-  font-size: 13px;
-
-  margin-bottom: 5px;
+.dados-cancelamento strong {
+    color: #D9C2A3;
 }
 
-.dado strong {
-  color: #26241f;
-
-  font-size: 15px;
-}
-
-.area-cancelamento {
-  border-top: 1px solid #e5e2dc;
-
-  padding-top: 24px;
-}
-
-.area-cancelamento label {
-  display: block;
-
-  color: #26241f;
-
-  font-weight: 600;
-
-  margin-bottom: 8px;
-}
-
-.area-cancelamento input {
-  width: 100%;
-
-  box-sizing: border-box;
-
-  padding: 13px 14px;
-
-  border: 1px solid #d8d4cc;
-
-  border-radius: 10px;
-
-  font-size: 15px;
-
-  outline: none;
-}
-
-.area-cancelamento input:focus {
-  border-color: #a88b5a;
-
-  box-shadow: 0 0 0 3px rgba(168, 139, 90, 0.15);
-}
-
-.aviso-cancelamento {
-  font-size: 13px;
-
-  color: #777;
-
-  line-height: 1.5;
-
-  margin: 9px 0 18px;
-}
+/* ===== BOTÃO CANCELAR ===== */
 
 .botao-cancelar {
-  width: 100%;
+    width: 100%;
 
-  border: none;
+    padding: 12px;
 
-  border-radius: 10px;
+    background: #c0392b;
 
-  padding: 14px;
+    color: #fff;
 
-  background: #b83a3a;
+    border: none;
 
-  color: white;
+    border-radius: 8px;
 
-  font-size: 16px;
+    font-size: 14px;
 
-  font-weight: 600;
+    font-weight: 700;
 
-  cursor: pointer;
+    cursor: pointer;
 
-  transition: 0.2s;
+    transition: 0.3s;
 }
 
 .botao-cancelar:hover {
-  background: #982f2f;
+    background: #a93226;
+
+    transform: translateY(-2px);
 }
 
 .botao-cancelar:disabled {
-  opacity: 0.6;
+    opacity: 0.6;
 
-  cursor: not-allowed;
+    cursor: not-allowed;
+
+    transform: none;
 }
 
-.cancelamento-info {
-  text-align: center;
+/* ===== RESPONSIVIDADE ===== */
 
-  color: #999;
+@media (max-width: 600px) {
 
-  font-size: 12px;
+    .cancelar-agendamento-page {
+        padding: 80px 20px 40px;
+    }
 
-  margin: 12px 0 0;
-}
+    .cancelar-agendamento-container h1 {
+        font-size: 28px;
+    }
 
-.cancelamento-finalizado {
-  text-align: center;
+    .cancelar-descricao {
+        font-size: 14px;
+    }
 
-  border-top: 1px solid #e5e2dc;
+    .buscar-cancelamento {
+        flex-direction: column;
+    }
 
-  padding-top: 24px;
-}
+    .buscar-cancelamento input {
+        width: 100%;
+        box-sizing: border-box;
+    }
 
-.cancelamento-finalizado > span {
-  display: flex;
+    .buscar-cancelamento button {
+        width: 100%;
 
-  width: 48px;
-  height: 48px;
+        padding: 13px;
+    }
 
-  margin: 0 auto 12px;
+    .lista-cancelamentos {
+        grid-template-columns: 1fr;
+    }
 
-  border-radius: 50%;
-
-  align-items: center;
-  justify-content: center;
-
-  background: #e8f3e8;
-
-  color: #3b7d3b;
-
-  font-size: 24px;
-
-  font-weight: bold;
-}
-
-.cancelamento-finalizado h2 {
-  margin: 0 0 8px;
-
-  color: #26241f;
-
-  font-size: 20px;
-}
-
-.cancelamento-finalizado p {
-  margin: 0;
-
-  color: #777;
-
-  font-size: 14px;
-}
-.cancelamento {
-  margin-top: 14px;
-  text-align: center;
-}
-
-.cancelamento p {
-  margin: 0 0 8px;
-
-  color: #777;
-
-  font-size: 13px;
-}
-
-.cancelamento a {
-  display: block;
-
-  width: 100%;
-  box-sizing: border-box;
-
-  padding: 12px 16px;
-
-  border-radius: 10px;
-
-  background: #3a3834;
-
-  color: #e6d2b5;
-
-  text-decoration: none;
-
-  font-size: 15px;
-  font-weight: 600;
-
-  transition: 0.2s;
-}
-
-.cancelamento a:hover {
-  background: #4a4741;
-}
-
-@media (max-width: 500px) {
-  .cancelamento-page {
-    padding: 16px;
-  }
-
-  .cancelamento-card {
-    padding: 24px 20px;
-  }
-
-  .cancelamento-card h1 {
-    font-size: 24px;
-  }
-
-  .dados-agendamento {
-    grid-template-columns: 1fr;
-  }
+    .cancelamento-card {
+        padding: 20px;
+    }
 }

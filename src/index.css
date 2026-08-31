@@ -15,5 +15,40 @@ html, body, #root {
   background: #26241f;
 }
 
+.botao-cancelar-home {
+    position: fixed;
+    top: 75px;
+    right: 20px;
+    z-index: 9999;
+
+    background: #D9C2A3;
+    color: #1E1F1A;
+
+    border: none;
+    border-radius: 8px;
+
+    padding: 10px 16px;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition: 0.3s;
+}
+
+.botao-cancelar-home:hover {
+    transform: translateY(-2px);
+    opacity: 0.9;
+}
+
+@media (max-width: 600px) {
+    .botao-cancelar-home {
+        top: 65px;
+        right: 12px;
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+}
 
 

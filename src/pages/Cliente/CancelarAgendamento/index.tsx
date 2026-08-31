@@ -1,212 +1,255 @@
 import "./style.css";
 
-import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useState } from "react";
 import { supabase } from "../../../lib/supabase";
 import { sucesso, erro, aviso } from "../../../utils/toast";
 
 type Agendamento = {
-    id: number;
-    nome: string;
-    telefone: string;
-    servico: string;
-    horario: string;
-    data: string;
-    status: string;
+  id: number;
+  nome: string;
+  telefone: string;
+  servico: string;
+  preco: number;
+  horario: string;
+  data: string;
+  status: string;
 };
 
 function CancelarAgendamento() {
-    const [searchParams] = useSearchParams();
+  const [telefone, setTelefone] = useState("");
+  const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
+  const [buscando, setBuscando] = useState(false);
+  const [cancelando, setCancelando] = useState<number | null>(null);
 
-    const id = searchParams.get("id");
+  function formatarTelefone(valor: string) {
+    const numeros = valor.replace(/\D/g, "");
 
-    const [agendamento, setAgendamento] =
-        useState<Agendamento | null>(null);
-
-    const [carregando, setCarregando] = useState(true);
-    const [cancelando, setCancelando] = useState(false);
-    const [telefone, setTelefone] = useState("");
-
-    useEffect(() => {
-        buscarAgendamento();
-    }, []);
-
-    async function buscarAgendamento() {
-        if (!id) {
-            setCarregando(false);
-            return;
-        }
-
-        const { data, error } = await supabase
-            .from("agendamentos")
-            .select(
-                "id, nome, telefone, servico, horario, data, status"
-            )
-            .eq("id", id)
-            .single();
-
-        if (error) {
-            console.log(error);
-            setCarregando(false);
-            return;
-        }
-
-        setAgendamento(data);
-        setCarregando(false);
+    if (numeros.length <= 2) {
+      return numeros;
     }
 
-    async function cancelarAgendamento() {
-        if (!agendamento) return;
-
-        if (agendamento.status === "Cancelado") {
-            aviso("Este agendamento já foi cancelado.");
-            return;
-        }
-
-        const telefoneDigitado = telefone.replace(/\D/g, "");
-        const telefoneAgendamento =
-            agendamento.telefone.replace(/\D/g, "");
-
-        if (telefoneDigitado.length !== 11) {
-            aviso("Digite um telefone válido.");
-            return;
-        }
-
-        if (telefoneDigitado !== telefoneAgendamento) {
-            erro("O telefone não corresponde ao agendamento.");
-            return;
-        }
-
-        setCancelando(true);
-
-        const { error } = await supabase
-            .from("agendamentos")
-            .update({
-                status: "Cancelado",
-            })
-            .eq("id", agendamento.id);
-
-        if (error) {
-            console.log(error);
-            erro("Não foi possível cancelar o agendamento.");
-            setCancelando(false);
-            return;
-        }
-
-        sucesso("Agendamento cancelado com sucesso!");
-
-        setAgendamento({
-            ...agendamento,
-            status: "Cancelado",
-        });
-
-        setCancelando(false);
+    if (numeros.length <= 7) {
+      return `(${numeros.slice(0, 2)}) ${numeros.slice(2)}`;
     }
 
-    if (carregando) {
-        return <p>Carregando agendamento...</p>;
+    return `(${numeros.slice(0, 2)}) ${numeros.slice(
+      2,
+      7
+    )}-${numeros.slice(7, 11)}`;
+  }
+
+  function formatarData(data: string) {
+    const [ano, mes, dia] = data.split("-");
+
+    return `${dia}/${mes}/${ano}`;
+  }
+
+async function buscarAgendamentos() {
+  const telefoneFormatado = formatarTelefone(telefone);
+
+  if (telefoneFormatado.replace(/\D/g, "").length !== 11) {
+    aviso("Digite um telefone válido.");
+    return;
+  }
+
+  setBuscando(true);
+
+  const { data, error } = await supabase
+    .from("agendamentos")
+    .select("*")
+    .eq("telefone", telefoneFormatado)
+    .neq("status", "Cancelado")
+    .order("data", { ascending: true })
+    .order("horario", { ascending: true });
+
+  setBuscando(false);
+
+  console.log("📞 Telefone pesquisado:", telefoneFormatado);
+  console.log("🔎 Agendamentos encontrados:", data);
+  console.log("❌ Erro:", error);
+
+  if (error) {
+    console.error(error);
+    erro("Erro ao buscar agendamentos.");
+    return;
+  }
+
+  setAgendamentos(
+    (data as Agendamento[]) || []
+  );
+
+  if (!data || data.length === 0) {
+    aviso(
+      "Nenhum agendamento encontrado para este telefone."
+    );
+  }
+}
+
+  async function cancelarAgendamento(id: number) {
+    const confirmar = window.confirm(
+      "Deseja realmente cancelar este agendamento?"
+    );
+
+    if (!confirmar) {
+      return;
     }
 
-    if (!agendamento) {
-        return (
-            <div>
-                <h1>Agendamento não encontrado</h1>
-                <p>
-                    Não encontramos um agendamento com este código.
-                </p>
-            </div>
-        );
+    setCancelando(id);
+
+    const { error } = await supabase
+      .from("agendamentos")
+      .update({
+        status: "Cancelado",
+      })
+      .eq("id", id);
+
+    if (error) {
+      console.error(error);
+
+      erro("Erro ao cancelar agendamento.");
+
+      setCancelando(null);
+
+      return;
     }
 
-return (
-  <div className="cancelamento-page">
-    <div className="cancelamento-card">
+    sucesso("Agendamento cancelado com sucesso!");
 
-      <h1>Cancelar agendamento</h1>
+    setAgendamentos((atual) =>
+      atual.filter(
+        (agendamento) => agendamento.id !== id
+      )
+    );
 
-      <p className="cancelamento-subtitulo">
-        Confira os dados do seu agendamento antes de cancelar.
-      </p>
+    setCancelando(null);
+  }
 
-      <div className="dados-agendamento">
+  return (
+    <div className="cancelar-agendamento-page">
 
-        <div className="dado">
-          <span>👤 Cliente</span>
-          <strong>{agendamento.nome}</strong>
-        </div>
+      <div className="cancelar-agendamento-container">
 
-        <div className="dado">
-          <span>💈 Serviço</span>
-          <strong>{agendamento.servico}</strong>
-        </div>
+        <h1>Cancelar agendamento</h1>
 
-        <div className="dado">
-          <span>📅 Data</span>
-          <strong>{agendamento.data}</strong>
-        </div>
+        <p className="cancelar-descricao">
+          Digite o telefone usado no agendamento
+          para consultar seus cortes.
+        </p>
 
-        <div className="dado">
-          <span>🕒 Horário</span>
-          <strong>{agendamento.horario}</strong>
-        </div>
-
-      </div>
-
-      {agendamento.status === "Cancelado" ? (
-
-        <div className="cancelamento-finalizado">
-          <span>✓</span>
-
-          <h2>Agendamento já cancelado</h2>
-
-          <p>
-            Este agendamento não está mais ativo.
-          </p>
-        </div>
-
-      ) : (
-
-        <div className="area-cancelamento">
-
-          <label>
-            Telefone usado no agendamento
-          </label>
+        <div className="buscar-cancelamento">
 
           <input
             type="tel"
-            placeholder="(99) 99999-9999"
+            placeholder="(86) 99999-9999"
             value={telefone}
+            maxLength={15}
             onChange={(e) =>
-              setTelefone(e.target.value)
+              setTelefone(
+                formatarTelefone(e.target.value)
+              )
             }
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                buscarAgendamentos();
+              }
+            }}
           />
 
-          <p className="aviso-cancelamento">
-            O telefone será usado para confirmar que
-            este agendamento pertence a você.
-          </p>
-
           <button
-            className="botao-cancelar"
-            onClick={cancelarAgendamento}
-            disabled={cancelando}
+            type="button"
+            onClick={buscarAgendamentos}
+            disabled={buscando}
           >
-            {cancelando
-              ? "Cancelando..."
-              : "Cancelar agendamento"}
+            {buscando
+              ? "Buscando..."
+              : "Buscar agendamentos"}
           </button>
-
-          <p className="cancelamento-info">
-            Essa ação não poderá ser desfeita.
-          </p>
 
         </div>
 
-      )}
+        {agendamentos.length > 0 && (
+
+          <div className="resultado-cancelamento">
+
+            <h2>Seus agendamentos</h2>
+
+            <div className="lista-cancelamentos">
+
+              {agendamentos.map(
+                (agendamento) => (
+
+                  <div
+                    className="cancelamento-card"
+                    key={agendamento.id}
+                  >
+
+                    <h3>
+                      {agendamento.servico}
+                    </h3>
+
+                    <div className="dados-cancelamento">
+
+                      <p>
+                        👤 <strong>Cliente:</strong>{" "}
+                        {agendamento.nome}
+                      </p>
+
+                      <p>
+                        📅 <strong>Data:</strong>{" "}
+                        {formatarData(
+                          agendamento.data
+                        )}
+                      </p>
+
+                      <p>
+                        🕐 <strong>Horário:</strong>{" "}
+                        {agendamento.horario}
+                      </p>
+
+                      <p>
+                        💰 <strong>Valor:</strong>{" "}
+                        R${" "}
+                        {Number(
+                          agendamento.preco
+                        ).toFixed(2)}
+                      </p>
+
+                    </div>
+
+                    <button
+                      type="button"
+                      className="botao-cancelar"
+                      onClick={() =>
+                        cancelarAgendamento(
+                          agendamento.id
+                        )
+                      }
+                      disabled={
+                        cancelando ===
+                        agendamento.id
+                      }
+                    >
+                      {cancelando ===
+                      agendamento.id
+                        ? "Cancelando..."
+                        : "❌ Cancelar agendamento"}
+                    </button>
+
+                  </div>
+
+                )
+              )}
+
+            </div>
+
+          </div>
+
+        )}
+
+      </div>
 
     </div>
-  </div>
-);
+  );
 }
 
 export default CancelarAgendamento;
