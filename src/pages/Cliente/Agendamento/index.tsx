@@ -1,11 +1,11 @@
 import "./style.css";
+
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
+
 import { horarios } from "../../../data/horarios";
 import { supabase } from "../../../lib/supabase";
 import { sucesso, erro, aviso } from "../../../utils/toast";
-
-
 
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -13,15 +13,34 @@ import "react-datepicker/dist/react-datepicker.css";
 import { ptBR } from "date-fns/locale";
 import { format, parseISO } from "date-fns";
 
+type BloqueioHorario = {
+  id: number;
+  data: string;
+  motivo: string;
+  hora_inicio: string | null;
+  hora_fim: string | null;
+};
+
 function Agendamento() {
   const location = useLocation();
+
   const servico = location.state;
 
-  // Data de hoje no formato yyyy-MM-dd,
-  // usando o horário local.
-  const dataHoje = format(new Date(), "yyyy-MM-dd");
+  // ==========================================
+  // DATA DE HOJE
+  // ==========================================
+
+  const dataHoje = format(
+    new Date(),
+    "yyyy-MM-dd"
+  );
+
+  // ==========================================
+  // ESTADOS
+  // ==========================================
 
   const [nome, setNome] = useState("");
+
   const [telefone, setTelefone] = useState("");
 
   const [dataSelecionada, setDataSelecionada] =
@@ -33,20 +52,39 @@ function Agendamento() {
   const [horariosOcupados, setHorariosOcupados] =
     useState<string[]>([]);
 
+  const [bloqueios, setBloqueios] =
+    useState<BloqueioHorario[]>([]);
+
   const [dataBloqueada, setDataBloqueada] =
     useState(false);
 
   const [linkCancelamento, setLinkCancelamento] =
     useState("");
 
+  // ==========================================
+  // BUSCAR DADOS QUANDO A DATA MUDAR
+  // ==========================================
+
   useEffect(() => {
     buscarHorariosOcupados();
-    verificarDataBloqueada();
+    buscarBloqueios();
   }, [dataSelecionada]);
 
+  // ==========================================
+  // VERIFICA SERVIÇO
+  // ==========================================
+
   if (!servico) {
-    return <h1>Nenhum serviço selecionado.</h1>;
+    return (
+      <h1>
+        Nenhum serviço selecionado.
+      </h1>
+    );
   }
+
+  // ==========================================
+  // BUSCAR HORÁRIOS OCUPADOS
+  // ==========================================
 
   async function buscarHorariosOcupados() {
     const { data, error } = await supabase
@@ -61,100 +99,286 @@ function Agendamento() {
     }
 
     setHorariosOcupados(
-      data.map((item: any) => item.horario)
+      data?.map(
+        (item: { horario: string }) =>
+          item.horario
+      ) || []
     );
   }
 
-  async function verificarDataBloqueada() {
-    const { data } = await supabase
+  // ==========================================
+  // BUSCAR BLOQUEIOS
+  // ==========================================
+
+  async function buscarBloqueios() {
+    const { data, error } = await supabase
       .from("dias_bloqueados")
-      .select("id")
-      .eq("data", dataSelecionada)
-      .maybeSingle();
+      .select(
+        "id, data, motivo, hora_inicio, hora_fim"
+      )
+      .eq("data", dataSelecionada);
 
-    console.log("Resultado:", data);
+    if (error) {
+      console.log(
+        "Erro ao buscar bloqueios:",
+        error
+      );
 
-    setDataBloqueada(!!data);
+      setBloqueios([]);
+      setDataBloqueada(false);
+
+      return;
+    }
+
+    const bloqueiosEncontrados =
+      (data as BloqueioHorario[]) || [];
+
+    setBloqueios(bloqueiosEncontrados);
+
+    // ==========================================
+    // VERIFICA SE EXISTE BLOQUEIO DO DIA INTEIRO
+    // ==========================================
+
+    const bloqueioDiaInteiro =
+      bloqueiosEncontrados.some(
+        (bloqueio) =>
+          bloqueio.hora_inicio === null &&
+          bloqueio.hora_fim === null
+      );
+
+    setDataBloqueada(
+      bloqueioDiaInteiro
+    );
+
+    // Caso a data tenha mudado e o horário
+    // selecionado tenha ficado bloqueado
+    setHorarioSelecionado("");
   }
+
+  // ==========================================
+  // VERIFICA SE UM HORÁRIO ESTÁ BLOQUEADO
+  // ==========================================
+
+  function horarioEstaBloqueado(
+    horario: string
+  ) {
+    // Se o dia inteiro estiver bloqueado
+    if (dataBloqueada) {
+      return true;
+    }
+
+    const [hora, minuto] =
+      horario.split(":").map(Number);
+
+    const horarioEmMinutos =
+      hora * 60 + minuto;
+
+    return bloqueios.some((bloqueio) => {
+      // Segurança: bloqueio do dia inteiro
+      if (
+        bloqueio.hora_inicio === null &&
+        bloqueio.hora_fim === null
+      ) {
+        return true;
+      }
+
+      if (
+        !bloqueio.hora_inicio ||
+        !bloqueio.hora_fim
+      ) {
+        return false;
+      }
+
+      const [inicioHora, inicioMinuto] =
+        bloqueio.hora_inicio
+          .slice(0, 5)
+          .split(":")
+          .map(Number);
+
+      const [fimHora, fimMinuto] =
+        bloqueio.hora_fim
+          .slice(0, 5)
+          .split(":")
+          .map(Number);
+
+      const inicioEmMinutos =
+        inicioHora * 60 +
+        inicioMinuto;
+
+      const fimEmMinutos =
+        fimHora * 60 +
+        fimMinuto;
+
+      /*
+        Exemplo:
+
+        Bloqueio:
+        12:00 até 14:00
+
+        12:00 -> bloqueado
+        12:30 -> bloqueado
+        13:00 -> bloqueado
+        13:30 -> bloqueado
+        14:00 -> disponível
+      */
+
+      return (
+        horarioEmMinutos >=
+          inicioEmMinutos &&
+        horarioEmMinutos <
+          fimEmMinutos
+      );
+    });
+  }
+
+  // ==========================================
+  // DATA ATUAL
+  // ==========================================
 
   const agora = new Date();
 
-  /*
-    Usamos parseISO para evitar problemas de fuso horário.
-  */
+  // ==========================================
+  // DOMINGO
+  // ==========================================
+
   const domingo =
-    parseISO(dataSelecionada).getDay() === 0;
+    parseISO(
+      dataSelecionada
+    ).getDay() === 0;
+
+  // ==========================================
+  // HORÁRIO ATUAL
+  // ==========================================
 
   const horarioAtual =
-    agora.getHours() * 60 + agora.getMinutes();
+    agora.getHours() * 60 +
+    agora.getMinutes();
 
-  // 0 = domingo
-  // 6 = sábado
+  // ==========================================
+  // DIA DA SEMANA
+  // ==========================================
+
   const diaSemana =
-    parseISO(dataSelecionada).getDay();
+    parseISO(
+      dataSelecionada
+    ).getDay();
 
-  /*
-    Horário de almoço:
+  // ==========================================
+  // HORÁRIO DE ALMOÇO
+  // ==========================================
 
-    Segunda a sexta:
-    12:00
-    12:30
-    13:00
-    13:30
-
-    Sábado:
-    12:00
-    12:30
-    13:00
-  */
   const horariosAlmoco =
     diaSemana === 6
-      ? ["12:00", "12:30", "13:00"]
-      : ["12:00", "12:30", "13:00", "13:30"];
+      ? [
+          "12:00",
+          "12:30",
+          "13:00",
+        ]
+      : [
+          "12:00",
+          "12:30",
+          "13:00",
+          "13:30",
+        ];
+
+  // ==========================================
+  // HORÁRIOS DISPONÍVEIS
+  // ==========================================
 
   const horariosDisponiveis =
     horarios.filter((horario) => {
 
-      // Horário já agendado
-      if (horariosOcupados.includes(horario)) {
+      // ----------------------------------------
+      // HORÁRIO JÁ AGENDADO
+      // ----------------------------------------
+
+      if (
+        horariosOcupados.includes(
+          horario
+        )
+      ) {
         return false;
       }
 
-      // Horário de almoço
-      if (horariosAlmoco.includes(horario)) {
+      // ----------------------------------------
+      // HORÁRIO DE ALMOÇO
+      // ----------------------------------------
+
+      if (
+        horariosAlmoco.includes(
+          horario
+        )
+      ) {
         return false;
       }
+
+      // ----------------------------------------
+      // BLOQUEIO DO BARBEIRO
+      // ----------------------------------------
+
+      if (
+        horarioEstaBloqueado(
+          horario
+        )
+      ) {
+        return false;
+      }
+
+      // ----------------------------------------
+      // CONVERTE HORÁRIO PARA MINUTOS
+      // ----------------------------------------
 
       const [hora, minuto] =
-        horario.split(":").map(Number);
+        horario
+          .split(":")
+          .map(Number);
 
       const horarioEmMinutos =
         hora * 60 + minuto;
 
-      /*
-        Se for uma data futura,
-        mostra os horários normalmente.
-      */
-      if (dataSelecionada !== dataHoje) {
+      // ----------------------------------------
+      // DATA FUTURA
+      // ----------------------------------------
+
+      if (
+        dataSelecionada !==
+        dataHoje
+      ) {
         return true;
       }
 
-      /*
-        Se for hoje,
-        mostra somente horários que ainda não passaram.
-      */
-      return horarioEmMinutos > horarioAtual;
+      // ----------------------------------------
+      // HOJE
+      // ----------------------------------------
+
+      return (
+        horarioEmMinutos >
+        horarioAtual
+      );
     });
 
-  function formatarTelefone(valor: string) {
-    const numeros =
-      valor.replace(/\D/g, "");
+  // ==========================================
+  // FORMATAR TELEFONE
+  // ==========================================
 
-    if (numeros.length <= 2) {
+  function formatarTelefone(
+    valor: string
+  ) {
+    const numeros =
+      valor.replace(
+        /\D/g,
+        ""
+      );
+
+    if (
+      numeros.length <= 2
+    ) {
       return numeros;
     }
 
-    if (numeros.length <= 7) {
+    if (
+      numeros.length <= 7
+    ) {
       return `(${numeros.slice(
         0,
         2
@@ -167,93 +391,291 @@ function Agendamento() {
     )}) ${numeros.slice(
       2,
       7
-    )}-${numeros.slice(7, 11)}`;
+    )}-${numeros.slice(
+      7,
+      11
+    )}`;
   }
 
-  function validarNome(nome: string) {
-    const nomeLimpo = nome.trim();
+  // ==========================================
+  // VALIDAR NOME
+  // ==========================================
 
-    // Mínimo de 3 caracteres
-    if (nomeLimpo.length < 3) {
-      return "Digite um nome com pelo menos 3 letras.";
+  function validarNome(
+    nome: string
+  ) {
+    const nomeLimpo =
+      nome.trim();
+
+    if (
+      nomeLimpo.length < 3
+    ) {
+      return (
+        "Digite um nome com pelo menos 3 letras."
+      );
     }
 
-    // Máximo de 60 caracteres
-    if (nomeLimpo.length > 60) {
-      return "Nome muito grande.";
+    if (
+      nomeLimpo.length > 60
+    ) {
+      return (
+        "Nome muito grande."
+      );
     }
 
-    // Apenas letras e espaços
     const regex =
       /^[A-Za-zÀ-ÿ\s]+$/;
 
-    if (!regex.test(nomeLimpo)) {
-      return "O nome deve conter apenas letras.";
+    if (
+      !regex.test(
+        nomeLimpo
+      )
+    ) {
+      return (
+        "O nome deve conter apenas letras."
+      );
     }
 
     return null;
   }
 
+  // ==========================================
+  // CONFIRMAR AGENDAMENTO
+  // ==========================================
+
   async function confirmarAgendamento() {
 
-    // Verifica se a data está bloqueada
-    if (dataBloqueada) {
+    // ========================================
+    // VERIFICA BLOQUEIO DO DIA
+    // ========================================
+
+    if (
+      dataBloqueada
+    ) {
       aviso(
         "Esta data está bloqueada pelo barbeiro."
       );
+
       return;
     }
 
-    // Verifica domingo
+    // ========================================
+    // VERIFICA SE O HORÁRIO FOI BLOQUEADO
+    // ========================================
+
+    if (
+      horarioSelecionado &&
+      horarioEstaBloqueado(
+        horarioSelecionado
+      )
+    ) {
+      aviso(
+        "Esse horário não está disponível."
+      );
+
+      setHorarioSelecionado("");
+
+      return;
+    }
+
+    // ========================================
+    // VERIFICA DOMINGO
+    // ========================================
+
     if (domingo) {
       aviso(
         "A GG Barbearia não funciona aos domingos."
       );
+
       return;
     }
 
-    // Valida nome
+    // ========================================
+    // VALIDA NOME
+    // ========================================
+
     const erroNome =
       validarNome(nome);
 
     if (erroNome) {
       aviso(erroNome);
+
       return;
     }
 
-    // Valida telefone
-    const telefoneLimpo =
-      telefone.replace(/\D/g, "");
+    // ========================================
+    // VALIDA TELEFONE
+    // ========================================
 
-    if (telefoneLimpo.length !== 11) {
+    const telefoneLimpo =
+      telefone.replace(
+        /\D/g,
+        ""
+      );
+
+    if (
+      telefoneLimpo.length !==
+      11
+    ) {
       aviso(
         "Digite um telefone válido."
       );
+
       return;
     }
 
-    // Verifica horário
-    if (!horarioSelecionado) {
+    // ========================================
+    // VALIDA HORÁRIO
+    // ========================================
+
+    if (
+      !horarioSelecionado
+    ) {
       aviso(
         "Escolha um horário."
       );
+
       return;
     }
 
-    // Verifica se o horário já foi ocupado
-    const { data: existente } =
-      await supabase
-        .from("agendamentos")
-        .select("id")
-        .eq("data", dataSelecionada)
-        .eq(
-          "horario",
-          horarioSelecionado
-        )
-        .neq(
-          "status",
-          "Cancelado"
-        );
+    // ========================================
+    // VERIFICA HORÁRIO NOVAMENTE
+    // ========================================
+
+    const {
+      data: bloqueiosAtualizados,
+    } = await supabase
+      .from("dias_bloqueados")
+      .select(
+        "id, data, motivo, hora_inicio, hora_fim"
+      )
+      .eq(
+        "data",
+        dataSelecionada
+      );
+
+    const bloqueiosAtuais =
+      (bloqueiosAtualizados as BloqueioHorario[]) ||
+      [];
+
+    const diaInteiroAtual =
+      bloqueiosAtuais.some(
+        (bloqueio) =>
+          bloqueio.hora_inicio === null &&
+          bloqueio.hora_fim === null
+      );
+
+    if (
+      diaInteiroAtual
+    ) {
+      aviso(
+        "O barbeiro bloqueou esta data."
+      );
+
+      setDataBloqueada(true);
+      setBloqueios(
+        bloqueiosAtuais
+      );
+      setHorarioSelecionado("");
+
+      return;
+    }
+
+    // ========================================
+    // VERIFICA BLOQUEIO DO HORÁRIO
+    // ========================================
+
+    const horarioBloqueadoAgora =
+      bloqueiosAtuais.some(
+        (bloqueio) => {
+
+          if (
+            bloqueio.hora_inicio === null &&
+            bloqueio.hora_fim === null
+          ) {
+            return true;
+          }
+
+          if (
+            !bloqueio.hora_inicio ||
+            !bloqueio.hora_fim
+          ) {
+            return false;
+          }
+
+          const [horaInicio, minutoInicio] =
+            bloqueio.hora_inicio
+              .slice(0, 5)
+              .split(":")
+              .map(Number);
+
+          const [horaFim, minutoFim] =
+            bloqueio.hora_fim
+              .slice(0, 5)
+              .split(":")
+              .map(Number);
+
+          const [hora, minuto] =
+            horarioSelecionado
+              .split(":")
+              .map(Number);
+
+          const inicio =
+            horaInicio * 60 +
+            minutoInicio;
+
+          const fim =
+            horaFim * 60 +
+            minutoFim;
+
+          const horario =
+            hora * 60 +
+            minuto;
+
+          return (
+            horario >= inicio &&
+            horario < fim
+          );
+        }
+      );
+
+    if (
+      horarioBloqueadoAgora
+    ) {
+      aviso(
+        "Esse horário foi bloqueado pelo barbeiro."
+      );
+
+      setBloqueios(
+        bloqueiosAtuais
+      );
+
+      setHorarioSelecionado("");
+
+      return;
+    }
+
+    // ========================================
+    // VERIFICA SE O HORÁRIO JÁ FOI AGENDADO
+    // ========================================
+
+    const {
+      data: existente,
+    } = await supabase
+      .from("agendamentos")
+      .select("id")
+      .eq(
+        "data",
+        dataSelecionada
+      )
+      .eq(
+        "horario",
+        horarioSelecionado
+      )
+      .neq(
+        "status",
+        "Cancelado"
+      );
 
     if (
       existente &&
@@ -268,7 +690,10 @@ function Agendamento() {
       return;
     }
 
-    // Cria o agendamento
+    // ========================================
+    // CRIA AGENDAMENTO
+    // ========================================
+
     const {
       data: novoAgendamento,
       error: insertError,
@@ -277,14 +702,19 @@ function Agendamento() {
       .insert([
         {
           nome,
-          telefone,
-          servico: servico.nome,
 
-          preco: Number(
-            servico.preco
-              .replace("R$", "")
-              .replace(",", ".")
-          ),
+          telefone:
+            telefoneLimpo,
+
+          servico:
+            servico.nome,
+
+          preco:
+            Number(
+              servico.preco
+                .replace("R$", "")
+                .replace(",", ".")
+            ),
 
           horario:
             horarioSelecionado,
@@ -292,14 +722,19 @@ function Agendamento() {
           data:
             dataSelecionada,
 
-          status: "Pendente",
+          status:
+            "Pendente",
         },
       ])
       .select("id")
       .single();
 
-    if (insertError) {
-      console.log(insertError);
+    if (
+      insertError
+    ) {
+      console.log(
+        insertError
+      );
 
       erro(
         "Erro ao salvar agendamento."
@@ -308,7 +743,9 @@ function Agendamento() {
       return;
     }
 
-    if (!novoAgendamento) {
+    if (
+      !novoAgendamento
+    ) {
       erro(
         "Não foi possível identificar o agendamento."
       );
@@ -316,10 +753,10 @@ function Agendamento() {
       return;
     }
 
-    /*
-      Gera o link de cancelamento
-      usando o ID do agendamento.
-    */
+    // ========================================
+    // LINK DE CANCELAMENTO
+    // ========================================
+
     const link =
       `${window.location.origin}/cancelar-agendamento?id=${novoAgendamento.id}`;
 
@@ -328,31 +765,55 @@ function Agendamento() {
       link
     );
 
-    setLinkCancelamento(link);
+    setLinkCancelamento(
+      link
+    );
+
+    // ========================================
+    // SUCESSO
+    // ========================================
 
     sucesso(
       "Agendamento realizado com sucesso!"
     );
 
-    // Limpa os campos
+    // ========================================
+    // LIMPA CAMPOS
+    // ========================================
+
     setNome("");
+
     setTelefone("");
+
     setHorarioSelecionado("");
 
-    /*
-      Volta para a data de hoje
-      sem problema de fuso horário.
-    */
-    setDataSelecionada(dataHoje);
+    // ========================================
+    // VOLTA PARA HOJE
+    // ========================================
+
+    setDataSelecionada(
+      dataHoje
+    );
 
     buscarHorariosOcupados();
   }
 
+  // ==========================================
+  // TELA
+  // ==========================================
+
   return (
     <div className="agendamento">
+
       <div className="agendamento-card">
 
-        <h1>Agendamento</h1>
+        <h1>
+          Agendamento
+        </h1>
+
+        {/* ================================= */}
+        {/* SERVIÇO */}
+        {/* ================================= */}
 
         <div className="info-servico">
 
@@ -361,14 +822,20 @@ function Agendamento() {
           </h2>
 
           <p>
-            Preço: {servico.preco}
+            Preço:{" "}
+            {servico.preco}
           </p>
 
           <p>
-            Duração: {servico.duracao}
+            Duração:{" "}
+            {servico.duracao}
           </p>
 
         </div>
+
+        {/* ================================= */}
+        {/* NOME */}
+        {/* ================================= */}
 
         <div className="input-group">
 
@@ -389,12 +856,18 @@ function Agendamento() {
                   " "
                 );
 
-              setNome(valor);
+              setNome(
+                valor
+              );
 
             }}
           />
 
         </div>
+
+        {/* ================================= */}
+        {/* TELEFONE */}
+        {/* ================================= */}
 
         <div className="input-group">
 
@@ -418,6 +891,10 @@ function Agendamento() {
 
         </div>
 
+        {/* ================================= */}
+        {/* DATA */}
+        {/* ================================= */}
+
         <div className="input-group">
 
           <label>
@@ -425,10 +902,7 @@ function Agendamento() {
           </label>
 
           <DatePicker
-            /*
-              parseISO evita que o
-              calendário volte um dia.
-            */
+
             selected={
               parseISO(
                 dataSelecionada
@@ -443,10 +917,6 @@ function Agendamento() {
                 return;
               }
 
-              /*
-                format mantém a data
-                no horário local.
-              */
               const data =
                 format(
                   date,
@@ -457,12 +927,15 @@ function Agendamento() {
                 data
               );
 
-              // Ao mudar a data,
-              // limpa o horário selecionado.
-              setHorarioSelecionado("");
+              setHorarioSelecionado(
+                ""
+              );
+
             }}
 
-            minDate={new Date()}
+            minDate={
+              new Date()
+            }
 
             locale={ptBR}
 
@@ -472,15 +945,20 @@ function Agendamento() {
               "Selecione uma data"
             }
 
-            /*
-              Domingo fica bloqueado.
-            */
-            filterDate={(date) =>
-              date.getDay() !== 0
+            filterDate={(
+              date
+            ) =>
+              date.getDay() !==
+              0
             }
+
           />
 
         </div>
+
+        {/* ================================= */}
+        {/* HORÁRIOS */}
+        {/* ================================= */}
 
         <h3>
           Escolha um horário
@@ -541,6 +1019,10 @@ function Agendamento() {
 
         )}
 
+        {/* ================================= */}
+        {/* CONFIRMAR */}
+        {/* ================================= */}
+
         <button
           className="botao-confirmar"
 
@@ -550,11 +1032,16 @@ function Agendamento() {
 
           disabled={
             domingo ||
-            dataBloqueada
+            dataBloqueada ||
+            !horarioSelecionado
           }
         >
           Confirmar Agendamento
         </button>
+
+        {/* ================================= */}
+        {/* CANCELAMENTO */}
+        {/* ================================= */}
 
         {linkCancelamento && (
 
@@ -582,6 +1069,7 @@ function Agendamento() {
         )}
 
       </div>
+
     </div>
   );
 }

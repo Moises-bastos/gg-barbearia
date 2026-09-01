@@ -1,59 +1,174 @@
-.dias-page{
-    min-height:100vh;
-    background:#26241f;
-    color:white;
-    padding:40px;
+.dias-page {
+    min-height: 100vh;
+    background: #26241f;
+    color: white;
+    padding: 40px;
 }
 
-.dias-page h1{
-    text-align:center;
-    margin-bottom:35px;
-    color:#E6D2B5;
+.dias-page h1 {
+    text-align: center;
+    margin-bottom: 35px;
+    color: #E6D2B5;
 }
 
-.novo-dia{
-    display:flex;
-    gap:15px;
-    margin-bottom:30px;
-    flex-wrap:wrap;
+/* FORMULÁRIO */
+
+.novo-dia {
+    display: flex;
+    align-items: flex-end;
+    gap: 15px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
 }
 
-.novo-dia input{
-    padding:10px;
-    border-radius:8px;
-    border:none;
+.novo-dia input {
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    background: #1d1d1d;
+    color: white;
+    border: 1px solid #444;
 }
 
-.novo-dia button{
-    padding:10px 20px;
-    border:none;
-    border-radius:8px;
-    cursor:pointer;
-    background:#D9C2A3;
-    font-weight:bold;
+.novo-dia input[type="date"],
+.novo-dia input[type="time"] {
+    min-height: 40px;
 }
 
-table{
-    width:100%;
-    border-collapse:collapse;
+/* CHECKBOX */
+
+.checkbox-dia {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    color: #E6D2B5;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.checkbox-dia input {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+/* HORÁRIOS */
+
+.campo-horario {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.campo-horario label {
+    color: #E6D2B5;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* BOTÃO */
+
+.novo-dia button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    background: #D9C2A3;
+    color: #1E1F1A;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.novo-dia button:hover {
+    transform: translateY(-2px);
+    background: #E6D2B5;
+}
+
+/* TABELA */
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #1d1d1d;
+    border-radius: 10px;
+    overflow: hidden;
 }
 
 th,
-td{
-    padding:15px;
-    border-bottom:1px solid #555;
+td {
+    padding: 15px;
+    border-bottom: 1px solid #444;
 }
 
-th{
-    color:#E6D2B5;
-    text-align:left;
+th {
+    color: #E6D2B5;
+    text-align: left;
 }
 
-.remover{
-    background:#c0392b;
-    color:white;
-    border:none;
-    padding:8px 15px;
-    border-radius:8px;
-    cursor:pointer;
+td {
+    color: #fff;
+}
+
+tbody tr:hover {
+    background: #252525;
+}
+
+/* BOTÃO LIBERAR */
+
+.remover {
+    background: #c0392b;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.remover:hover {
+    background: #e74c3c;
+    transform: translateY(-2px);
+}
+
+/* RESPONSIVIDADE */
+
+@media (max-width: 700px) {
+
+    .dias-page {
+        padding: 25px 15px;
+    }
+
+    .novo-dia {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .checkbox-dia {
+        height: auto;
+    }
+
+    .campo-horario {
+        width: 100%;
+    }
+
+    .campo-horario input,
+    .novo-dia input[type="date"],
+    .novo-dia input[type="text"] {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .novo-dia button {
+        width: 100%;
+    }
+
+    table {
+        font-size: 14px;
+    }
+
+    th,
+    td {
+        padding: 10px 8px;
+    }
 }
