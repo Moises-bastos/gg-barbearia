@@ -30,17 +30,13 @@ function Agendamento() {
   // DATA DE HOJE
   // ==========================================
 
-  const dataHoje = format(
-    new Date(),
-    "yyyy-MM-dd"
-  );
+  const dataHoje = format(new Date(), "yyyy-MM-dd");
 
   // ==========================================
   // ESTADOS
   // ==========================================
 
   const [nome, setNome] = useState("");
-
   const [telefone, setTelefone] = useState("");
 
   const [dataSelecionada, setDataSelecionada] =
@@ -48,6 +44,9 @@ function Agendamento() {
 
   const [horarioSelecionado, setHorarioSelecionado] =
     useState("");
+
+  const [agendamentoConfirmado, setAgendamentoConfirmado] =
+    useState(false);
 
   const [horariosOcupados, setHorariosOcupados] =
     useState<string[]>([]);
@@ -135,10 +134,6 @@ function Agendamento() {
 
     setBloqueios(bloqueiosEncontrados);
 
-    // ==========================================
-    // VERIFICA SE EXISTE BLOQUEIO DO DIA INTEIRO
-    // ==========================================
-
     const bloqueioDiaInteiro =
       bloqueiosEncontrados.some(
         (bloqueio) =>
@@ -150,8 +145,6 @@ function Agendamento() {
       bloqueioDiaInteiro
     );
 
-    // Caso a data tenha mudado e o horário
-    // selecionado tenha ficado bloqueado
     setHorarioSelecionado("");
   }
 
@@ -162,7 +155,6 @@ function Agendamento() {
   function horarioEstaBloqueado(
     horario: string
   ) {
-    // Se o dia inteiro estiver bloqueado
     if (dataBloqueada) {
       return true;
     }
@@ -174,7 +166,6 @@ function Agendamento() {
       hora * 60 + minuto;
 
     return bloqueios.some((bloqueio) => {
-      // Segurança: bloqueio do dia inteiro
       if (
         bloqueio.hora_inicio === null &&
         bloqueio.hora_fim === null
@@ -209,59 +200,28 @@ function Agendamento() {
         fimHora * 60 +
         fimMinuto;
 
-      /*
-        Exemplo:
-
-        Bloqueio:
-        12:00 até 14:00
-
-        12:00 -> bloqueado
-        12:30 -> bloqueado
-        13:00 -> bloqueado
-        13:30 -> bloqueado
-        14:00 -> disponível
-      */
-
       return (
-        horarioEmMinutos >=
-          inicioEmMinutos &&
-        horarioEmMinutos <
-          fimEmMinutos
+        horarioEmMinutos >= inicioEmMinutos &&
+        horarioEmMinutos < fimEmMinutos
       );
     });
   }
 
   // ==========================================
-  // DATA ATUAL
+  // DATA / HORÁRIO ATUAL
   // ==========================================
 
   const agora = new Date();
 
-  // ==========================================
-  // DOMINGO
-  // ==========================================
-
   const domingo =
-    parseISO(
-      dataSelecionada
-    ).getDay() === 0;
-
-  // ==========================================
-  // HORÁRIO ATUAL
-  // ==========================================
+    parseISO(dataSelecionada).getDay() === 0;
 
   const horarioAtual =
     agora.getHours() * 60 +
     agora.getMinutes();
 
-  // ==========================================
-  // DIA DA SEMANA
-  // ==========================================
-
   const diaSemana =
-    parseISO(
-      dataSelecionada
-    ).getDay();
+    parseISO(dataSelecionada).getDay();
 
   // ==========================================
   // HORÁRIO DE ALMOÇO
@@ -288,10 +248,6 @@ function Agendamento() {
   const horariosDisponiveis =
     horarios.filter((horario) => {
 
-      // ----------------------------------------
-      // HORÁRIO JÁ AGENDADO
-      // ----------------------------------------
-
       if (
         horariosOcupados.includes(
           horario
@@ -299,10 +255,6 @@ function Agendamento() {
       ) {
         return false;
       }
-
-      // ----------------------------------------
-      // HORÁRIO DE ALMOÇO
-      // ----------------------------------------
 
       if (
         horariosAlmoco.includes(
@@ -312,10 +264,6 @@ function Agendamento() {
         return false;
       }
 
-      // ----------------------------------------
-      // BLOQUEIO DO BARBEIRO
-      // ----------------------------------------
-
       if (
         horarioEstaBloqueado(
           horario
@@ -323,10 +271,6 @@ function Agendamento() {
       ) {
         return false;
       }
-
-      // ----------------------------------------
-      // CONVERTE HORÁRIO PARA MINUTOS
-      // ----------------------------------------
 
       const [hora, minuto] =
         horario
@@ -336,20 +280,12 @@ function Agendamento() {
       const horarioEmMinutos =
         hora * 60 + minuto;
 
-      // ----------------------------------------
-      // DATA FUTURA
-      // ----------------------------------------
-
       if (
         dataSelecionada !==
         dataHoje
       ) {
         return true;
       }
-
-      // ----------------------------------------
-      // HOJE
-      // ----------------------------------------
 
       return (
         horarioEmMinutos >
@@ -445,23 +381,13 @@ function Agendamento() {
 
   async function confirmarAgendamento() {
 
-    // ========================================
-    // VERIFICA BLOQUEIO DO DIA
-    // ========================================
-
-    if (
-      dataBloqueada
-    ) {
+    if (dataBloqueada) {
       aviso(
         "Esta data está bloqueada pelo barbeiro."
       );
 
       return;
     }
-
-    // ========================================
-    // VERIFICA SE O HORÁRIO FOI BLOQUEADO
-    // ========================================
 
     if (
       horarioSelecionado &&
@@ -478,10 +404,6 @@ function Agendamento() {
       return;
     }
 
-    // ========================================
-    // VERIFICA DOMINGO
-    // ========================================
-
     if (domingo) {
       aviso(
         "A GG Barbearia não funciona aos domingos."
@@ -489,10 +411,6 @@ function Agendamento() {
 
       return;
     }
-
-    // ========================================
-    // VALIDA NOME
-    // ========================================
 
     const erroNome =
       validarNome(nome);
@@ -502,10 +420,6 @@ function Agendamento() {
 
       return;
     }
-
-    // ========================================
-    // VALIDA TELEFONE
-    // ========================================
 
     const telefoneLimpo =
       telefone.replace(
@@ -524,10 +438,6 @@ function Agendamento() {
       return;
     }
 
-    // ========================================
-    // VALIDA HORÁRIO
-    // ========================================
-
     if (
       !horarioSelecionado
     ) {
@@ -539,7 +449,7 @@ function Agendamento() {
     }
 
     // ========================================
-    // VERIFICA HORÁRIO NOVAMENTE
+    // VERIFICA BLOQUEIOS ATUALIZADOS
     // ========================================
 
     const {
@@ -656,7 +566,7 @@ function Agendamento() {
     }
 
     // ========================================
-    // VERIFICA SE O HORÁRIO JÁ FOI AGENDADO
+    // VERIFICA HORÁRIO JÁ AGENDADO
     // ========================================
 
     const {
@@ -760,11 +670,6 @@ function Agendamento() {
     const link =
       `${window.location.origin}/cancelar-agendamento?id=${novoAgendamento.id}`;
 
-    console.log(
-      "LINK:",
-      link
-    );
-
     setLinkCancelamento(
       link
     );
@@ -777,25 +682,30 @@ function Agendamento() {
       "Agendamento realizado com sucesso!"
     );
 
+    // Ativa a tela animada de sucesso
+    setAgendamentoConfirmado(true);
+
     // ========================================
     // LIMPA CAMPOS
     // ========================================
 
     setNome("");
-
     setTelefone("");
-
     setHorarioSelecionado("");
 
-    // ========================================
-    // VOLTA PARA HOJE
-    // ========================================
-
-    setDataSelecionada(
-      dataHoje
-    );
-
     buscarHorariosOcupados();
+  }
+
+  // ==========================================
+  // NOVO AGENDAMENTO
+  // ==========================================
+
+  function novoAgendamento() {
+    setAgendamentoConfirmado(false);
+    setLinkCancelamento("");
+
+    setDataSelecionada(dataHoje);
+    setHorarioSelecionado("");
   }
 
   // ==========================================
@@ -807,262 +717,326 @@ function Agendamento() {
 
       <div className="agendamento-card">
 
-        <h1>
-          Agendamento
-        </h1>
+        {!agendamentoConfirmado ? (
 
-        {/* ================================= */}
-        {/* SERVIÇO */}
-        {/* ================================= */}
+          <>
+            <h1>
+              Agendamento
+            </h1>
 
-        <div className="info-servico">
+            {/* SERVIÇO */}
 
-          <h2>
-            {servico.nome}
-          </h2>
+            <div className="info-servico">
 
-          <p>
-            Preço:{" "}
-            {servico.preco}
-          </p>
+              <h2>
+                {servico.nome}
+              </h2>
 
-          <p>
-            Duração:{" "}
-            {servico.duracao}
-          </p>
+              <p>
+                Preço:{" "}
+                {servico.preco}
+              </p>
 
-        </div>
+              <p>
+                Duração:{" "}
+                {servico.duracao}
+              </p>
 
-        {/* ================================= */}
-        {/* NOME */}
-        {/* ================================= */}
+            </div>
 
-        <div className="input-group">
+            {/* NOME */}
 
-          <label>
-            Nome
-          </label>
+            <div className="input-group">
 
-          <input
-            type="text"
-            placeholder="Digite seu nome"
-            value={nome}
-            maxLength={60}
-            onChange={(e) => {
+              <label>
+                Nome
+              </label>
 
-              const valor =
-                e.target.value.replace(
-                  /\s{2,}/g,
-                  " "
-                );
+              <input
+                type="text"
+                placeholder="Digite seu nome"
+                value={nome}
+                maxLength={60}
+                onChange={(e) => {
 
-              setNome(
-                valor
-              );
+                  const valor =
+                    e.target.value.replace(
+                      /\s{2,}/g,
+                      " "
+                    );
 
-            }}
-          />
+                  setNome(
+                    valor
+                  );
 
-        </div>
+                }}
+              />
 
-        {/* ================================= */}
-        {/* TELEFONE */}
-        {/* ================================= */}
+            </div>
 
-        <div className="input-group">
+            {/* TELEFONE */}
 
-          <label>
-            Telefone
-          </label>
+            <div className="input-group">
 
-          <input
-            type="tel"
-            placeholder="(99) 99999-9999"
-            value={telefone}
-            maxLength={15}
-            onChange={(e) =>
-              setTelefone(
-                formatarTelefone(
-                  e.target.value
-                )
-              )
-            }
-          />
+              <label>
+                Telefone
+              </label>
 
-        </div>
+              <input
+                type="tel"
+                placeholder="(99) 99999-9999"
+                value={telefone}
+                maxLength={15}
+                onChange={(e) =>
+                  setTelefone(
+                    formatarTelefone(
+                      e.target.value
+                    )
+                  )
+                }
+              />
 
-        {/* ================================= */}
-        {/* DATA */}
-        {/* ================================= */}
+            </div>
 
-        <div className="input-group">
+            {/* DATA */}
 
-          <label>
-            Data
-          </label>
+            <div className="input-group">
 
-          <DatePicker
+              <label>
+                Data
+              </label>
 
-            selected={
-              parseISO(
-                dataSelecionada
-              )
-            }
+              <DatePicker
 
-            onChange={(
-              date: Date | null
-            ) => {
+                selected={
+                  parseISO(
+                    dataSelecionada
+                  )
+                }
 
-              if (!date) {
-                return;
+                onChange={(
+                  date: Date | null
+                ) => {
+
+                  if (!date) {
+                    return;
+                  }
+
+                  const data =
+                    format(
+                      date,
+                      "yyyy-MM-dd"
+                    );
+
+                  setDataSelecionada(
+                    data
+                  );
+
+                  setHorarioSelecionado(
+                    ""
+                  );
+
+                }}
+
+                minDate={
+                  new Date()
+                }
+
+                locale={ptBR}
+
+                dateFormat="dd/MM/yyyy"
+
+                placeholderText={
+                  "Selecione uma data"
+                }
+
+                filterDate={(
+                  date
+                ) =>
+                  date.getDay() !==
+                  0
+                }
+
+              />
+
+            </div>
+
+            {/* HORÁRIOS */}
+
+            <h3>
+              Escolha um horário
+            </h3>
+
+            {domingo ? (
+
+              <p className="sem-horarios">
+                A GG Barbearia não funciona
+                aos domingos.
+              </p>
+
+            ) : dataBloqueada ? (
+
+              <p className="sem-horarios">
+                O barbeiro não atenderá
+                nesta data.
+              </p>
+
+            ) : horariosDisponiveis.length === 0 ? (
+
+              <p className="sem-horarios">
+                Não há horários disponíveis
+                para esta data.
+              </p>
+
+            ) : (
+
+              <div className="horarios">
+
+                {horariosDisponiveis.map(
+                  (horario) => (
+
+                    <button
+                      key={horario}
+                      type="button"
+                      className={
+                        horarioSelecionado ===
+                        horario
+                          ? "horario ativo"
+                          : "horario"
+                      }
+                      onClick={() =>
+                        setHorarioSelecionado(
+                          horario
+                        )
+                      }
+                    >
+                      {horario}
+                    </button>
+
+                  )
+                )}
+
+              </div>
+
+            )}
+
+            {/* CONFIRMAR */}
+
+            <button
+              className="botao-confirmar"
+              onClick={
+                confirmarAgendamento
               }
+              disabled={
+                domingo ||
+                dataBloqueada ||
+                !horarioSelecionado
+              }
+            >
+              Confirmar Agendamento
+            </button>
 
-              const data =
-                format(
-                  date,
-                  "yyyy-MM-dd"
-                );
-
-              setDataSelecionada(
-                data
-              );
-
-              setHorarioSelecionado(
-                ""
-              );
-
-            }}
-
-            minDate={
-              new Date()
-            }
-
-            locale={ptBR}
-
-            dateFormat="dd/MM/yyyy"
-
-            placeholderText={
-              "Selecione uma data"
-            }
-
-            filterDate={(
-              date
-            ) =>
-              date.getDay() !==
-              0
-            }
-
-          />
-
-        </div>
-
-        {/* ================================= */}
-        {/* HORÁRIOS */}
-        {/* ================================= */}
-
-        <h3>
-          Escolha um horário
-        </h3>
-
-        {domingo ? (
-
-          <p className="sem-horarios">
-            A GG Barbearia não funciona
-            aos domingos.
-          </p>
-
-        ) : dataBloqueada ? (
-
-          <p className="sem-horarios">
-            O barbeiro não atenderá
-            nesta data.
-          </p>
-
-        ) : horariosDisponiveis.length === 0 ? (
-
-          <p className="sem-horarios">
-            Não há horários disponíveis
-            para esta data.
-          </p>
+          </>
 
         ) : (
 
-          <div className="horarios">
+          /* ===================================
+             TELA DE SUCESSO
+             =================================== */
 
-            {horariosDisponiveis.map(
-              (horario) => (
+          <div className="sucesso-agendamento">
 
-                <button
-                  key={horario}
-                  type="button"
+            <div className="check-animado">
 
-                  className={
-                    horarioSelecionado ===
-                    horario
-                      ? "horario ativo"
-                      : "horario"
-                  }
+              <div className="check-circulo">
 
-                  onClick={() =>
-                    setHorarioSelecionado(
-                      horario
-                    )
-                  }
-                >
-                  {horario}
-                </button>
+                <span>
+                  ✓
+                </span>
 
-              )
-            )}
+              </div>
 
-          </div>
+            </div>
 
-        )}
+            <h1>
+              Agendamento confirmado!
+            </h1>
 
-        {/* ================================= */}
-        {/* CONFIRMAR */}
-        {/* ================================= */}
-
-        <button
-          className="botao-confirmar"
-
-          onClick={
-            confirmarAgendamento
-          }
-
-          disabled={
-            domingo ||
-            dataBloqueada ||
-            !horarioSelecionado
-          }
-        >
-          Confirmar Agendamento
-        </button>
-
-        {/* ================================= */}
-        {/* CANCELAMENTO */}
-        {/* ================================= */}
-
-        {linkCancelamento && (
-
-          <div className="cancelamento">
-
-            <p>
-              Precisa cancelar
-              seu agendamento?
+            <p className="sucesso-subtitulo">
+              Seu horário foi reservado com sucesso.
             </p>
 
-            <a
-              href={
-                linkCancelamento
+            <div className="resumo-agendamento">
+
+              <div className="resumo-item">
+
+                <span>
+                  💈 Serviço
+                </span>
+
+                <strong>
+                  {servico.nome}
+                </strong>
+
+              </div>
+
+              <div className="resumo-item">
+
+                <span>
+                  📅 Data
+                </span>
+
+                <strong>
+                  {dataSelecionada}
+                </strong>
+
+              </div>
+
+              <div className="resumo-item">
+
+                <span>
+                  🕐 Horário
+                </span>
+
+                <strong>
+                  {horarioSelecionado}
+                </strong>
+
+              </div>
+
+            </div>
+
+            {linkCancelamento && (
+
+              <div className="cancelamento-sucesso">
+
+                <p>
+                  Precisou desistir do corte?
+                </p>
+
+                <a
+                  href={
+                    linkCancelamento
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Cancelar agendamento
+                </a>
+
+              </div>
+
+            )}
+
+            <button
+              type="button"
+              className="botao-novo-agendamento"
+              onClick={
+                novoAgendamento
               }
-
-              target="_blank"
-
-              rel="noopener noreferrer"
             >
-              Cancelar agendamento
-            </a>
+              Fazer outro agendamento
+            </button>
 
           </div>
 

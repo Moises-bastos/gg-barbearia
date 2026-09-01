@@ -1,3 +1,7 @@
+/* ==========================================
+   AGENDAMENTO
+========================================== */
+
 .agendamento {
   min-height: 100vh;
   background: #26241f;
@@ -13,13 +17,18 @@
   background: #1d1d1d;
   padding: 40px;
   border-radius: 12px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35);
 }
 
 .agendamento-card h1 {
-  color: #E6D2B5;
+  color: #e6d2b5;
   text-align: center;
   margin-bottom: 30px;
 }
+
+/* ==========================================
+   SERVIÇO
+========================================== */
 
 .info-servico {
   background: #2b2b2b;
@@ -38,6 +47,10 @@
   margin-bottom: 8px;
 }
 
+/* ==========================================
+   CAMPOS
+========================================== */
+
 .input-group {
   display: flex;
   flex-direction: column;
@@ -50,11 +63,21 @@
 }
 
 .input-group input {
+  width: 100%;
   padding: 12px;
   border: none;
   border-radius: 8px;
   outline: none;
+  box-sizing: border-box;
 }
+
+.input-group input:focus {
+  box-shadow: 0 0 0 2px #e6d2b5;
+}
+
+/* ==========================================
+   HORÁRIOS
+========================================== */
 
 .horarios {
   display: grid;
@@ -70,12 +93,46 @@
   cursor: pointer;
   background: #333;
   color: white;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.horario:hover {
+  transform: translateY(-2px);
+  background: #444;
 }
 
 .horario.ativo {
-  background: #E6D2B5;
+  background: #e6d2b5;
   color: black;
+  box-shadow: 0 0 0 2px #e6d2b5;
 }
+
+.sem-horarios {
+  color: #e6d2b5;
+}
+
+h3 {
+  color: #e6d2b5;
+}
+
+/* ==========================================
+   DATA
+========================================== */
+
+.input-group input[type="date"] {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+/* ==========================================
+   BOTÃO CONFIRMAR
+========================================== */
 
 .botao-confirmar {
   width: 100%;
@@ -83,27 +140,296 @@
   padding: 14px;
   border: none;
   border-radius: 8px;
-  background: #E6D2B5;
+  background: #e6d2b5;
   color: black;
   font-size: 16px;
   cursor: pointer;
   font-weight: bold;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
 }
-.sem-horarios{
-  color: #E6D2B5;
+
+.botao-confirmar:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(230, 210, 181, 0.2);
 }
-h3{
-  color: #E6D2B5;
+
+.botao-confirmar:active:not(:disabled) {
+  transform: scale(0.97);
 }
-.input-group input[type="date"]{
-    width:100%;
-    padding:12px;
-    border:none;
-    border-radius:8px;
-    font-size:16px;
-}
+
 .botao-confirmar:disabled {
-    background: #777;
-    cursor: not-allowed;
-    opacity: .6;
+  background: #777;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* ==========================================
+   TELA DE SUCESSO
+========================================== */
+
+.sucesso-agendamento {
+  text-align: center;
+  animation: aparecerSucesso 0.5s ease forwards;
+}
+
+@keyframes aparecerSucesso {
+  from {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sucesso-agendamento h1 {
+  margin-top: 20px;
+  margin-bottom: 10px;
+  color: #e6d2b5;
+  font-size: 30px;
+}
+
+.sucesso-subtitulo {
+  color: #bbb;
+  margin-bottom: 30px;
+}
+
+/* ==========================================
+   CHECK ANIMADO
+========================================== */
+
+.check-animado {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 110px;
+}
+
+.check-circulo {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+
+  background: #e6d2b5;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  box-shadow:
+    0 0 0 0 rgba(230, 210, 181, 0.45);
+
+  animation:
+    aparecerCirculo 0.5s ease forwards,
+    pulsarCirculo 1.8s ease-out 0.5s;
+}
+
+.check-circulo span {
+  color: #1d1d1d;
+  font-size: 55px;
+  font-weight: bold;
+
+  opacity: 0;
+
+  transform: scale(0.3);
+
+  animation:
+    aparecerCheck 0.35s ease 0.35s forwards;
+}
+
+@keyframes aparecerCirculo {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+
+  70% {
+    transform: scale(1.12);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes aparecerCheck {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) rotate(-20deg);
+  }
+
+  70% {
+    transform: scale(1.15) rotate(5deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+}
+
+@keyframes pulsarCirculo {
+  0% {
+    box-shadow:
+      0 0 0 0 rgba(230, 210, 181, 0.45);
+  }
+
+  100% {
+    box-shadow:
+      0 0 0 25px rgba(230, 210, 181, 0);
+  }
+}
+
+/* ==========================================
+   RESUMO DO AGENDAMENTO
+========================================== */
+
+.resumo-agendamento {
+  background: #2b2b2b;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 25px 0;
+
+  text-align: left;
+
+  animation:
+    aparecerResumo 0.5s ease 0.3s both;
+}
+
+@keyframes aparecerResumo {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.resumo-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 12px 0;
+
+  border-bottom: 1px solid #444;
+}
+
+.resumo-item:last-child {
+  border-bottom: none;
+}
+
+.resumo-item span {
+  color: #aaa;
+}
+
+.resumo-item strong {
+  color: white;
+}
+
+/* ==========================================
+   CANCELAMENTO
+========================================== */
+
+.cancelamento-sucesso {
+  margin-top: 20px;
+  padding: 18px;
+
+  background: #242424;
+
+  border-radius: 10px;
+
+  animation:
+    aparecerResumo 0.5s ease 0.5s both;
+}
+
+.cancelamento-sucesso p {
+  color: #bbb;
+  margin-bottom: 10px;
+}
+
+.cancelamento-sucesso a {
+  color: #e6d2b5;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.cancelamento-sucesso a:hover {
+  text-decoration: underline;
+}
+
+/* ==========================================
+   NOVO AGENDAMENTO
+========================================== */
+
+.botao-novo-agendamento {
+  width: 100%;
+
+  margin-top: 20px;
+
+  padding: 13px;
+
+  border: 1px solid #e6d2b5;
+
+  border-radius: 8px;
+
+  background: transparent;
+
+  color: #e6d2b5;
+
+  font-size: 15px;
+
+  font-weight: bold;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.botao-novo-agendamento:hover {
+  background: #e6d2b5;
+  color: #1d1d1d;
+  transform: translateY(-2px);
+}
+
+/* ==========================================
+   RESPONSIVIDADE
+========================================== */
+
+@media (max-width: 600px) {
+
+  .agendamento {
+    padding: 20px;
+  }
+
+  .agendamento-card {
+    padding: 25px 20px;
+  }
+
+  .horarios {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .sucesso-agendamento h1 {
+    font-size: 25px;
+  }
+
+  .resumo-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
 }
