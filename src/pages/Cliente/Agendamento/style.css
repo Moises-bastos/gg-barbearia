@@ -405,6 +405,28 @@ h3 {
   transform: translateY(-2px);
 }
 
+.lembrar-dados {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: -10px;
+  margin-bottom: 20px;
+  color: #bbb;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.lembrar-dados input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #E6D2B5;
+}
+
+.lembrar-dados span {
+  color: #bbb;
+}
+
 /* ==========================================
    RESPONSIVIDADE
 ========================================== */

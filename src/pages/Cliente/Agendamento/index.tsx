@@ -39,6 +39,8 @@ function Agendamento() {
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
 
+  const [lembrarDados, setLembrarDados] = useState(false);
+
   const [dataSelecionada, setDataSelecionada] =
     useState(dataHoje);
 
@@ -68,6 +70,23 @@ function Agendamento() {
     buscarHorariosOcupados();
     buscarBloqueios();
   }, [dataSelecionada]);
+
+  useEffect(() => {
+  const dadosSalvos = localStorage.getItem("gg_cliente");
+
+  if (!dadosSalvos) return;
+
+  try {
+    const cliente = JSON.parse(dadosSalvos);
+
+    setNome(cliente.nome || "");
+    setTelefone(cliente.telefone || "");
+    setLembrarDados(true);
+  } catch (error) {
+    console.log("Erro ao carregar dados salvos:", error);
+    localStorage.removeItem("gg_cliente");
+  }
+}, []);
 
   // ==========================================
   // VERIFICA SERVIÇO
@@ -678,6 +697,24 @@ function Agendamento() {
     // SUCESSO
     // ========================================
 
+    if (lembrarDados) {
+  localStorage.setItem(
+    "gg_cliente",
+    JSON.stringify({
+      nome: nome.trim(),
+      telefone: telefone,
+    })
+  );
+} else {
+  localStorage.removeItem("gg_cliente");
+}
+
+
+
+
+
+
+
     sucesso(
       "Agendamento realizado com sucesso!"
     );
@@ -797,6 +834,20 @@ function Agendamento() {
               />
 
             </div>
+
+            <label className="lembrar-dados">
+  <input
+    type="checkbox"
+    checked={lembrarDados}
+    onChange={(e) =>
+      setLembrarDados(e.target.checked)
+    }
+  />
+
+  <span>
+    Lembrar meus dados neste aparelho
+  </span>
+</label>
 
             {/* DATA */}
 
