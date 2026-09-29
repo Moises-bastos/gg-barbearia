@@ -42,6 +42,10 @@ function Dashboard() {
     new Date().toISOString().split("T")[0],
   );
 
+  // ============================================
+  // ENCAIXE
+  // ============================================
+
   const [mostrarEncaixe, setMostrarEncaixe] = useState(false);
 
   const [nomeEncaixe, setNomeEncaixe] = useState("");
@@ -53,11 +57,28 @@ function Dashboard() {
 
   const [salvandoEncaixe, setSalvandoEncaixe] = useState(false);
 
+  // ============================================
+  // FATURAMENTO
+  // ============================================
+
+  const [agendamentosConcluidos, setAgendamentosConcluidos] = useState<
+    Agendamento[]
+  >([]);
+
   const navigate = useNavigate();
+
+  // ============================================
+  // BUSCA DOS AGENDAMENTOS
+  // ============================================
 
   useEffect(() => {
     buscarAgendamentos();
+    buscarFaturamento();
   }, [dataSelecionada]);
+
+  // ============================================
+  // ATUALIZA HORÁRIOS DO ENCAIXE
+  // ============================================
 
   useEffect(() => {
     if (mostrarEncaixe && servicoEncaixe) {
@@ -74,7 +95,9 @@ function Dashboard() {
 
     if (error) {
       console.log(error);
+
       erro("Erro ao buscar agendamentos.");
+
       return;
     }
 
@@ -82,6 +105,33 @@ function Dashboard() {
       setAgendamentos(data as Agendamento[]);
     }
   }
+
+  // ============================================
+  // BUSCAR FATURAMENTO
+  // ============================================
+
+  async function buscarFaturamento() {
+    const { data, error } = await supabase
+      .from("agendamentos")
+      .select("*")
+      .eq("status", "Concluído");
+
+    if (error) {
+      console.log(error);
+
+      erro("Erro ao buscar faturamento.");
+
+      return;
+    }
+
+    if (data) {
+      setAgendamentosConcluidos(data as Agendamento[]);
+    }
+  }
+
+  // ============================================
+  // DATA
+  // ============================================
 
   function mudarData(dias: number) {
     const data = new Date(`${dataSelecionada}T12:00:00`);
@@ -102,6 +152,10 @@ function Dashboard() {
 
     return `${dia}/${mes}/${ano}`;
   }
+
+  // ============================================
+  // HORÁRIOS
+  // ============================================
 
   function horarioParaMinutos(horario: string) {
     const [hora, minuto] = horario.split(":").map(Number);
@@ -128,15 +182,24 @@ function Dashboard() {
     return inicio1 < fim2 && fim1 > inicio2;
   }
 
+  // ============================================
+  // HORÁRIOS DISPONÍVEIS PARA ENCAIXE
+  // ============================================
+
   async function buscarHorariosDisponiveis() {
     const servico = servicos.find((s) => s.nome === servicoEncaixe);
 
     if (!servico) {
       setHorariosDisponiveis([]);
+
       return;
     }
 
     const duracao = Number(servico.duracao.replace("min", "").trim());
+
+    // --------------------------------------------
+    // AGENDAMENTOS
+    // --------------------------------------------
 
     const { data: agendamentosDoDia, error } = await supabase
       .from("agendamentos")
@@ -146,9 +209,15 @@ function Dashboard() {
 
     if (error) {
       console.log(error);
+
       erro("Erro ao verificar horários.");
+
       return;
     }
+
+    // --------------------------------------------
+    // BLOQUEIOS
+    // --------------------------------------------
 
     const { data: bloqueios, error: erroBloqueios } = await supabase
       .from("dias_bloqueados")
@@ -157,7 +226,9 @@ function Dashboard() {
 
     if (erroBloqueios) {
       console.log(erroBloqueios);
+
       erro("Erro ao verificar bloqueios.");
+
       return;
     }
 
@@ -166,24 +237,38 @@ function Dashboard() {
 
     const bloqueiosDoDia = (bloqueios || []) as DiaBloqueado[];
 
+    // --------------------------------------------
+    // DIA DA SEMANA
+    // --------------------------------------------
+
     const dia = new Date(`${dataSelecionada}T12:00:00`);
+
     const diaDaSemana = dia.getDay();
 
     // Domingo fechado
     if (diaDaSemana === 0) {
       setHorariosDisponiveis([]);
+
       return;
     }
 
-    // Verifica se o dia inteiro está bloqueado
+    // --------------------------------------------
+    // DIA INTEIRO BLOQUEADO
+    // --------------------------------------------
+
     const diaInteiroBloqueado = bloqueiosDoDia.some(
       (bloqueio) => !bloqueio.hora_inicio && !bloqueio.hora_fim,
     );
 
     if (diaInteiroBloqueado) {
       setHorariosDisponiveis([]);
+
       return;
     }
+
+    // --------------------------------------------
+    // HORÁRIO ATUAL
+    // --------------------------------------------
 
     const agora = new Date();
 
@@ -191,21 +276,31 @@ function Dashboard() {
 
     const minutosAgora = agora.getHours() * 60 + agora.getMinutes();
 
+    // --------------------------------------------
+    // FILTRO DOS HORÁRIOS
+    // --------------------------------------------
+
     const disponiveis = horarios.filter((horario) => {
       const inicio = horarioParaMinutos(horario);
+
       const fim = inicio + duracao;
 
-      // Não permite encaixe no passado quando for hoje
+      // Não permite horários passados
+      // quando for hoje
       if (hoje && inicio <= minutosAgora) {
         return false;
       }
 
-      // Limite de funcionamento: 18:30
+      // Limite de funcionamento
+      // 18:30
       if (fim > 18 * 60 + 30) {
         return false;
       }
 
-      // Almoço
+      // ----------------------------------------
+      // ALMOÇO
+      // ----------------------------------------
+
       const inicioAlmoco = 12 * 60;
 
       const fimAlmoco = diaDaSemana === 6 ? 13 * 60 + 30 : 14 * 60;
@@ -214,7 +309,10 @@ function Dashboard() {
         return false;
       }
 
-      // Verifica agendamentos existentes
+      // ----------------------------------------
+      // AGENDAMENTOS EXISTENTES
+      // ----------------------------------------
+
       const conflitoAgendamento = agendamentosExistentes.some((agendamento) => {
         const inicioExistente = horarioParaMinutos(agendamento.horario);
 
@@ -230,10 +328,11 @@ function Dashboard() {
         return false;
       }
 
-      // Verifica bloqueios
+      // ----------------------------------------
+      // BLOQUEIOS
+      // ----------------------------------------
+
       const conflitoBloqueio = bloqueiosDoDia.some((bloqueio) => {
-        // Se for bloqueio de dia inteiro,
-        // já foi tratado acima.
         if (!bloqueio.hora_inicio || !bloqueio.hora_fim) {
           return false;
         }
@@ -259,6 +358,10 @@ function Dashboard() {
     }
   }
 
+  // ============================================
+  // ABRIR ENCAIXE
+  // ============================================
+
   function abrirEncaixe() {
     setNomeEncaixe("");
     setTelefoneEncaixe("");
@@ -268,6 +371,10 @@ function Dashboard() {
 
     setMostrarEncaixe(true);
   }
+
+  // ============================================
+  // FECHAR ENCAIXE
+  // ============================================
 
   function fecharEncaixe() {
     setMostrarEncaixe(false);
@@ -279,19 +386,26 @@ function Dashboard() {
     setHorariosDisponiveis([]);
   }
 
+  // ============================================
+  // CRIAR ENCAIXE
+  // ============================================
+
   async function criarEncaixe() {
     if (!nomeEncaixe.trim()) {
       erro("Digite o nome do cliente.");
+
       return;
     }
 
     if (!servicoEncaixe) {
       erro("Selecione um serviço.");
+
       return;
     }
 
     if (!horarioEncaixe) {
       erro("Selecione um horário.");
+
       return;
     }
 
@@ -299,6 +413,7 @@ function Dashboard() {
 
     if (!servico) {
       erro("Serviço inválido.");
+
       return;
     }
 
@@ -317,8 +432,10 @@ function Dashboard() {
 
       const telefoneLimpo = telefoneEncaixe.replace(/\D/g, "");
 
-      // Verifica novamente os agendamentos
-      // antes de inserir.
+      // ----------------------------------------
+      // VERIFICA AGENDAMENTOS NOVAMENTE
+      // ----------------------------------------
+
       const { data: agendamentosDoDia, error } = await supabase
         .from("agendamentos")
         .select("horario, servico, duracao")
@@ -327,6 +444,7 @@ function Dashboard() {
 
       if (error) {
         erro("Erro ao verificar disponibilidade.");
+
         return;
       }
 
@@ -360,6 +478,10 @@ function Dashboard() {
         return;
       }
 
+      // ----------------------------------------
+      // VERIFICA BLOQUEIOS NOVAMENTE
+      // ----------------------------------------
+
       const { data: bloqueios, error: erroBloqueios } = await supabase
         .from("dias_bloqueados")
         .select("hora_inicio, hora_fim")
@@ -367,6 +489,7 @@ function Dashboard() {
 
       if (erroBloqueios) {
         erro("Erro ao verificar bloqueios.");
+
         return;
       }
 
@@ -400,6 +523,10 @@ function Dashboard() {
 
         return;
       }
+
+      // ----------------------------------------
+      // INSERE ENCAIXE
+      // ----------------------------------------
 
       const { error: erroInsercao } = await supabase
         .from("agendamentos")
@@ -439,6 +566,10 @@ function Dashboard() {
     }
   }
 
+  // ============================================
+  // CARDS DO DIA
+  // ============================================
+
   const totalClientes = agendamentos.length;
 
   const pendentes = agendamentos.filter((a) => a.status === "Pendente").length;
@@ -447,9 +578,101 @@ function Dashboard() {
     (a) => a.status === "Concluído",
   ).length;
 
+  // Receita do dia selecionado
   const receita = agendamentos
     .filter((a) => a.status === "Concluído")
     .reduce((total, a) => total + Number(a.preco), 0);
+
+  // ============================================
+  // FATURAMENTO POR PERÍODO
+  // ============================================
+
+  function criarDataLocal(data: string) {
+    const [ano, mes, dia] = data.split("-").map(Number);
+
+    return new Date(ano, mes - 1, dia);
+  }
+
+  function inicioDaSemana(data: Date) {
+    const resultado = new Date(data);
+
+    const diaSemana = resultado.getDay();
+
+    const diferenca = diaSemana === 0 ? -6 : 1 - diaSemana;
+
+    resultado.setDate(resultado.getDate() + diferenca);
+
+    resultado.setHours(0, 0, 0, 0);
+
+    return resultado;
+  }
+
+  function fimDaSemana(data: Date) {
+    const resultado = inicioDaSemana(data);
+
+    resultado.setDate(resultado.getDate() + 6);
+
+    resultado.setHours(23, 59, 59, 999);
+
+    return resultado;
+  }
+
+  function inicioDoMes(data: Date) {
+    return new Date(data.getFullYear(), data.getMonth(), 1);
+  }
+
+  function fimDoMes(data: Date) {
+    return new Date(
+      data.getFullYear(),
+      data.getMonth() + 1,
+      0,
+      23,
+      59,
+      59,
+      999,
+    );
+  }
+
+  function calcularFaturamento(inicio: Date, fim: Date) {
+    return agendamentosConcluidos
+      .filter((agendamento) => {
+        const data = criarDataLocal(agendamento.data);
+
+        return data >= inicio && data <= fim;
+      })
+      .reduce((total, agendamento) => total + Number(agendamento.preco), 0);
+  }
+
+  const hoje = new Date();
+
+  const faturamentoHoje = calcularFaturamento(
+    new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()),
+    new Date(
+      hoje.getFullYear(),
+      hoje.getMonth(),
+      hoje.getDate(),
+      23,
+      59,
+      59,
+      999,
+    ),
+  );
+
+  const faturamentoSemana = calcularFaturamento(
+    inicioDaSemana(hoje),
+    fimDaSemana(hoje),
+  );
+
+  const faturamentoMes = calcularFaturamento(inicioDoMes(hoje), fimDoMes(hoje));
+
+  const faturamentoTotal = agendamentosConcluidos.reduce(
+    (total, agendamento) => total + Number(agendamento.preco),
+    0,
+  );
+
+  // ============================================
+  // CONFIRMAR AGENDAMENTO
+  // ============================================
 
   async function confirmarAgendamento(id: number) {
     const { error } = await supabase
@@ -467,8 +690,13 @@ function Dashboard() {
 
     sucesso("Agendamento confirmado!");
 
-    buscarAgendamentos();
+    await buscarAgendamentos();
+    await buscarFaturamento();
   }
+
+  // ============================================
+  // CANCELAR AGENDAMENTO
+  // ============================================
 
   async function cancelarAgendamento(id: number) {
     if (!window.confirm("Deseja cancelar este agendamento?")) {
@@ -490,8 +718,13 @@ function Dashboard() {
 
     sucesso("Agendamento cancelado!");
 
-    buscarAgendamentos();
+    await buscarAgendamentos();
+    await buscarFaturamento();
   }
+
+  // ============================================
+  // LOGOUT
+  // ============================================
 
   async function logout() {
     await supabase.auth.signOut();
@@ -499,19 +732,35 @@ function Dashboard() {
     navigate("/login");
   }
 
+  // ============================================
+  // WHATSAPP
+  // ============================================
+
   function enviarMensagem(agendamento: Agendamento) {
     enviarWhatsApp({
       nome: agendamento.nome,
+
       telefone: agendamento.telefone,
+
       servico: agendamento.servico,
+
       data: agendamento.data,
+
       horario: agendamento.horario,
     });
   }
 
+  // ============================================
+  // TELA
+  // ============================================
+
   return (
     <div className="dashboard">
       <NotificacaoAgendamento />
+
+      {/* ======================================
+          HEADER
+      ====================================== */}
 
       <div className="dashboard-header">
         <div className="top-buttons">
@@ -539,7 +788,15 @@ function Dashboard() {
         </div>
       </div>
 
+      {/* ======================================
+          TÍTULO
+      ====================================== */}
+
       <h1 className="dashboard-title">Painel do Barbeiro</h1>
+
+      {/* ======================================
+          SELETOR DE DATA
+      ====================================== */}
 
       <div className="seletor-data">
         <button type="button" onClick={() => mudarData(-1)}>
@@ -556,6 +813,10 @@ function Dashboard() {
           ▶
         </button>
       </div>
+
+      {/* ======================================
+          ESCOLHER DATA
+      ====================================== */}
 
       <div className="escolher-data">
         <label htmlFor="data">Escolher outra data:</label>
@@ -576,6 +837,10 @@ function Dashboard() {
         Agendamentos de {formatarData(dataSelecionada)}
       </p>
 
+      {/* ======================================
+          FORMULÁRIO DE ENCAIXE
+      ====================================== */}
+
       {mostrarEncaixe && (
         <div className="encaixe-container">
           <div className="encaixe-form">
@@ -594,6 +859,8 @@ function Dashboard() {
             <p className="encaixe-data">📅 {formatarData(dataSelecionada)}</p>
 
             <div className="encaixe-grid">
+              {/* NOME */}
+
               <div className="campo-encaixe">
                 <label htmlFor="nomeEncaixe">Nome do cliente *</label>
 
@@ -606,6 +873,8 @@ function Dashboard() {
                 />
               </div>
 
+              {/* TELEFONE */}
+
               <div className="campo-encaixe">
                 <label htmlFor="telefoneEncaixe">Telefone</label>
 
@@ -617,6 +886,8 @@ function Dashboard() {
                   placeholder="Opcional"
                 />
               </div>
+
+              {/* SERVIÇO */}
 
               <div className="campo-encaixe">
                 <label htmlFor="servicoEncaixe">Serviço *</label>
@@ -639,6 +910,8 @@ function Dashboard() {
                   ))}
                 </select>
               </div>
+
+              {/* HORÁRIO */}
 
               <div className="campo-encaixe">
                 <label htmlFor="horarioEncaixe">Horário *</label>
@@ -666,6 +939,8 @@ function Dashboard() {
               </div>
             </div>
 
+            {/* AÇÕES */}
+
             <div className="encaixe-actions">
               <button
                 type="button"
@@ -688,6 +963,10 @@ function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* ======================================
+          CARDS DO DIA
+      ====================================== */}
 
       <div className="dashboard-cards">
         <div className="dashboard-card">
@@ -719,6 +998,64 @@ function Dashboard() {
           <span>{concluidos}</span>
         </div>
       </div>
+
+      {/* ======================================
+          FATURAMENTO
+      ====================================== */}
+
+      <div className="financeiro-dashboard">
+        <h2 className="financeiro-titulo">💰 Faturamento</h2>
+
+        <div className="financeiro-cards">
+          <div className="financeiro-card">
+            <span>Hoje</span>
+
+            <strong>
+              {faturamentoHoje.toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+              })}
+            </strong>
+          </div>
+
+          <div className="financeiro-card">
+            <span>Esta semana</span>
+
+            <strong>
+              {faturamentoSemana.toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+              })}
+            </strong>
+          </div>
+
+          <div className="financeiro-card">
+            <span>Este mês</span>
+
+            <strong>
+              {faturamentoMes.toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+              })}
+            </strong>
+          </div>
+
+          <div className="financeiro-card destaque">
+            <span>Faturamento total</span>
+
+            <strong>
+              {faturamentoTotal.toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+              })}
+            </strong>
+          </div>
+        </div>
+      </div>
+
+      {/* ======================================
+          AGENDAMENTOS
+      ====================================== */}
 
       <div className="appointments">
         {agendamentos.length === 0 ? (

@@ -478,6 +478,84 @@
 }
 
 /* ================================================= */
+/* ===== FATURAMENTO =============================== */
+/* ================================================= */
+
+.financeiro-dashboard {
+  margin-top: 10px;
+  margin-bottom: 45px;
+}
+
+.financeiro-titulo {
+  color: #e6d2b5;
+  text-align: center;
+  font-size: 28px;
+  margin-bottom: 20px;
+}
+
+.financeiro-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.financeiro-card {
+  background: #1d1d1d;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: 0.3s;
+}
+
+.financeiro-card:hover {
+  transform: translateY(-4px);
+  border-color: #e6d2b5;
+}
+
+.financeiro-card span {
+  color: #aaa;
+  font-size: 14px;
+}
+
+.financeiro-card strong {
+  color: #fff;
+  font-size: 25px;
+}
+
+.financeiro-card.destaque {
+  border-color: #d9c2a3;
+}
+
+.financeiro-card.destaque strong {
+  color: #e6d2b5;
+}
+
+@media (max-width: 900px) {
+  .financeiro-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .financeiro-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .financeiro-titulo {
+    font-size: 23px;
+  }
+
+  .financeiro-card strong {
+    font-size: 22px;
+  }
+}
+
+/* ================================================= */
 /* ===== RESPONSIVIDADE ============================ */
 /* ================================================= */
 
