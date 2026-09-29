@@ -21,6 +21,12 @@ type BloqueioHorario = {
   hora_fim: string | null;
 };
 
+type AgendamentoExistente = {
+  horario: string;
+  servico: string;
+  duracao: number | null;
+};
+
 function Agendamento() {
   const location = useLocation();
 
@@ -41,87 +47,107 @@ function Agendamento() {
 
   const [lembrarDados, setLembrarDados] = useState(false);
 
-  const [dataSelecionada, setDataSelecionada] =
-    useState(dataHoje);
+  const [dataSelecionada, setDataSelecionada] = useState(dataHoje);
 
-  const [horarioSelecionado, setHorarioSelecionado] =
-    useState("");
+  const [horarioSelecionado, setHorarioSelecionado] = useState("");
 
-  const [agendamentoConfirmado, setAgendamentoConfirmado] =
-    useState(false);
+  const [agendamentoConfirmado, setAgendamentoConfirmado] = useState(false);
 
-  const [horariosOcupados, setHorariosOcupados] =
-    useState<string[]>([]);
+  const [agendamentosExistentes, setAgendamentosExistentes] = useState<
+    AgendamentoExistente[]
+  >([]);
 
-  const [bloqueios, setBloqueios] =
-    useState<BloqueioHorario[]>([]);
+  const [bloqueios, setBloqueios] = useState<BloqueioHorario[]>([]);
 
-  const [dataBloqueada, setDataBloqueada] =
-    useState(false);
+  const [dataBloqueada, setDataBloqueada] = useState(false);
 
-  const [linkCancelamento, setLinkCancelamento] =
-    useState("");
+  const [linkCancelamento, setLinkCancelamento] = useState("");
 
   // ==========================================
   // BUSCAR DADOS QUANDO A DATA MUDAR
   // ==========================================
 
   useEffect(() => {
-    buscarHorariosOcupados();
+    buscarAgendamentos();
     buscarBloqueios();
   }, [dataSelecionada]);
 
+  // ==========================================
+  // CARREGAR DADOS SALVOS
+  // ==========================================
+
   useEffect(() => {
-  const dadosSalvos = localStorage.getItem("gg_cliente");
+    const dadosSalvos = localStorage.getItem("gg_cliente");
 
-  if (!dadosSalvos) return;
+    if (!dadosSalvos) return;
 
-  try {
-    const cliente = JSON.parse(dadosSalvos);
+    try {
+      const cliente = JSON.parse(dadosSalvos);
 
-    setNome(cliente.nome || "");
-    setTelefone(cliente.telefone || "");
-    setLembrarDados(true);
-  } catch (error) {
-    console.log("Erro ao carregar dados salvos:", error);
-    localStorage.removeItem("gg_cliente");
-  }
-}, []);
+      setNome(cliente.nome || "");
+      setTelefone(cliente.telefone || "");
+      setLembrarDados(true);
+    } catch (error) {
+      console.log("Erro ao carregar dados salvos:", error);
+
+      localStorage.removeItem("gg_cliente");
+    }
+  }, []);
 
   // ==========================================
   // VERIFICA SERVIÇO
   // ==========================================
 
   if (!servico) {
-    return (
-      <h1>
-        Nenhum serviço selecionado.
-      </h1>
-    );
+    return <h1>Nenhum serviço selecionado.</h1>;
   }
 
   // ==========================================
-  // BUSCAR HORÁRIOS OCUPADOS
+  // CONVERTER HORÁRIO PARA MINUTOS
   // ==========================================
 
-  async function buscarHorariosOcupados() {
+  function horarioParaMinutos(horario: string) {
+    const [hora, minuto] = horario.split(":").map(Number);
+
+    return hora * 60 + minuto;
+  }
+
+  // ==========================================
+  // PEGAR DURAÇÃO DO SERVIÇO
+  // ==========================================
+
+  function obterDuracaoServico(): number {
+    const duracaoTexto = servico?.duracao;
+
+    if (!duracaoTexto) {
+      return 30;
+    }
+
+    const numero = Number(String(duracaoTexto).replace(/\D/g, ""));
+
+    return numero > 0 ? numero : 30;
+  }
+
+  // ==========================================
+  // BUSCAR AGENDAMENTOS
+  // ==========================================
+
+  async function buscarAgendamentos() {
     const { data, error } = await supabase
       .from("agendamentos")
-      .select("horario")
+      .select("horario, servico, duracao")
       .eq("data", dataSelecionada)
       .neq("status", "Cancelado");
 
     if (error) {
       console.log(error);
+
+      setAgendamentosExistentes([]);
+
       return;
     }
 
-    setHorariosOcupados(
-      data?.map(
-        (item: { horario: string }) =>
-          item.horario
-      ) || []
-    );
+    setAgendamentosExistentes((data as AgendamentoExistente[]) || []);
   }
 
   // ==========================================
@@ -131,16 +157,11 @@ function Agendamento() {
   async function buscarBloqueios() {
     const { data, error } = await supabase
       .from("dias_bloqueados")
-      .select(
-        "id, data, motivo, hora_inicio, hora_fim"
-      )
+      .select("id, data, motivo, hora_inicio, hora_fim")
       .eq("data", dataSelecionada);
 
     if (error) {
-      console.log(
-        "Erro ao buscar bloqueios:",
-        error
-      );
+      console.log("Erro ao buscar bloqueios:", error);
 
       setBloqueios([]);
       setDataBloqueada(false);
@@ -148,81 +169,69 @@ function Agendamento() {
       return;
     }
 
-    const bloqueiosEncontrados =
-      (data as BloqueioHorario[]) || [];
+    const bloqueiosEncontrados = (data as BloqueioHorario[]) || [];
 
     setBloqueios(bloqueiosEncontrados);
 
-    const bloqueioDiaInteiro =
-      bloqueiosEncontrados.some(
-        (bloqueio) =>
-          bloqueio.hora_inicio === null &&
-          bloqueio.hora_fim === null
-      );
-
-    setDataBloqueada(
-      bloqueioDiaInteiro
+    const bloqueioDiaInteiro = bloqueiosEncontrados.some(
+      (bloqueio) => bloqueio.hora_inicio === null && bloqueio.hora_fim === null,
     );
+
+    setDataBloqueada(bloqueioDiaInteiro);
 
     setHorarioSelecionado("");
   }
 
   // ==========================================
-  // VERIFICA SE UM HORÁRIO ESTÁ BLOQUEADO
+  // VERIFICAR CONFLITO COM BLOQUEIO
   // ==========================================
 
-  function horarioEstaBloqueado(
-    horario: string
-  ) {
+  function intervaloBloqueado(inicio: number, fim: number) {
     if (dataBloqueada) {
       return true;
     }
 
-    const [hora, minuto] =
-      horario.split(":").map(Number);
-
-    const horarioEmMinutos =
-      hora * 60 + minuto;
-
     return bloqueios.some((bloqueio) => {
-      if (
-        bloqueio.hora_inicio === null &&
-        bloqueio.hora_fim === null
-      ) {
+      // Dia inteiro
+      if (bloqueio.hora_inicio === null && bloqueio.hora_fim === null) {
         return true;
       }
 
-      if (
-        !bloqueio.hora_inicio ||
-        !bloqueio.hora_fim
-      ) {
+      // Bloqueio inválido/incompleto
+      if (!bloqueio.hora_inicio || !bloqueio.hora_fim) {
         return false;
       }
 
-      const [inicioHora, inicioMinuto] =
-        bloqueio.hora_inicio
-          .slice(0, 5)
-          .split(":")
-          .map(Number);
-
-      const [fimHora, fimMinuto] =
-        bloqueio.hora_fim
-          .slice(0, 5)
-          .split(":")
-          .map(Number);
-
-      const inicioEmMinutos =
-        inicioHora * 60 +
-        inicioMinuto;
-
-      const fimEmMinutos =
-        fimHora * 60 +
-        fimMinuto;
-
-      return (
-        horarioEmMinutos >= inicioEmMinutos &&
-        horarioEmMinutos < fimEmMinutos
+      const inicioBloqueio = horarioParaMinutos(
+        bloqueio.hora_inicio.slice(0, 5),
       );
+
+      const fimBloqueio = horarioParaMinutos(bloqueio.hora_fim.slice(0, 5));
+
+      return inicio < fimBloqueio && fim > inicioBloqueio;
+    });
+  }
+
+  // ==========================================
+  // VERIFICAR CONFLITO COM AGENDAMENTO
+  // ==========================================
+
+  function intervaloOcupado(inicio: number, fim: number) {
+    return agendamentosExistentes.some((agendamento) => {
+      const inicioExistente = horarioParaMinutos(agendamento.horario);
+
+      /*
+          Agendamentos antigos podem não possuir
+          duração porque a coluna foi adicionada agora.
+
+          Nesse caso usamos 30 minutos como
+          compatibilidade.
+        */
+      const duracaoExistente = agendamento.duracao || 30;
+
+      const fimExistente = inicioExistente + duracaoExistente;
+
+      return inicio < fimExistente && fim > inicioExistente;
     });
   }
 
@@ -232,123 +241,106 @@ function Agendamento() {
 
   const agora = new Date();
 
-  const domingo =
-    parseISO(dataSelecionada).getDay() === 0;
+  const domingo = parseISO(dataSelecionada).getDay() === 0;
 
-  const horarioAtual =
-    agora.getHours() * 60 +
-    agora.getMinutes();
+  const horarioAtual = agora.getHours() * 60 + agora.getMinutes();
 
-  const diaSemana =
-    parseISO(dataSelecionada).getDay();
+  const diaSemana = parseISO(dataSelecionada).getDay();
 
   // ==========================================
   // HORÁRIO DE ALMOÇO
   // ==========================================
 
-  const horariosAlmoco =
-    diaSemana === 6
-      ? [
-          "12:00",
-          "12:30",
-          "13:00",
-        ]
-      : [
-          "12:00",
-          "12:30",
-          "13:00",
-          "13:30",
-        ];
+  /*
+    Segunda a sexta:
+    12:00 até 14:00
+
+    Sábado:
+    12:00 até 13:30
+  */
+
+  const inicioAlmoco = 12 * 60;
+
+  const fimAlmoco = diaSemana === 6 ? 13 * 60 + 30 : 14 * 60;
+
+  // ==========================================
+  // HORÁRIO DE FUNCIONAMENTO
+  // ==========================================
+
+  const fimFuncionamento = 18 * 60 + 30;
+
+  // ==========================================
+  // DURAÇÃO DO SERVIÇO
+  // ==========================================
+
+  const duracaoServico = obterDuracaoServico();
+
+  // ==========================================
+  // VERIFICAR SE PASSA PELO ALMOÇO
+  // ==========================================
+
+  function intervaloPassaPeloAlmoco(inicio: number, fim: number) {
+    return inicio < fimAlmoco && fim > inicioAlmoco;
+  }
 
   // ==========================================
   // HORÁRIOS DISPONÍVEIS
   // ==========================================
 
-  const horariosDisponiveis =
-    horarios.filter((horario) => {
+  const horariosDisponiveis = horarios.filter((horario) => {
+    const inicio = horarioParaMinutos(horario);
 
-      if (
-        horariosOcupados.includes(
-          horario
-        )
-      ) {
+    const fim = inicio + duracaoServico;
+
+    // Não pode passar do fechamento
+    if (fim > fimFuncionamento) {
+      return false;
+    }
+
+    // Não pode entrar no almoço
+    if (intervaloPassaPeloAlmoco(inicio, fim)) {
+      return false;
+    }
+
+    // Não pode entrar em bloqueio
+    if (intervaloBloqueado(inicio, fim)) {
+      return false;
+    }
+
+    // Não pode bater com outro agendamento
+    if (intervaloOcupado(inicio, fim)) {
+      return false;
+    }
+
+    // Se for hoje, o horário inicial
+    // precisa ser posterior ao atual
+    if (dataSelecionada === dataHoje) {
+      if (inicio <= horarioAtual) {
         return false;
       }
+    }
 
-      if (
-        horariosAlmoco.includes(
-          horario
-        )
-      ) {
-        return false;
-      }
-
-      if (
-        horarioEstaBloqueado(
-          horario
-        )
-      ) {
-        return false;
-      }
-
-      const [hora, minuto] =
-        horario
-          .split(":")
-          .map(Number);
-
-      const horarioEmMinutos =
-        hora * 60 + minuto;
-
-      if (
-        dataSelecionada !==
-        dataHoje
-      ) {
-        return true;
-      }
-
-      return (
-        horarioEmMinutos >
-        horarioAtual
-      );
-    });
+    return true;
+  });
 
   // ==========================================
   // FORMATAR TELEFONE
   // ==========================================
 
-  function formatarTelefone(
-    valor: string
-  ) {
-    const numeros =
-      valor.replace(
-        /\D/g,
-        ""
-      );
+  function formatarTelefone(valor: string) {
+    const numeros = valor.replace(/\D/g, "");
 
-    if (
-      numeros.length <= 2
-    ) {
+    if (numeros.length <= 2) {
       return numeros;
     }
 
-    if (
-      numeros.length <= 7
-    ) {
-      return `(${numeros.slice(
-        0,
-        2
-      )}) ${numeros.slice(2)}`;
+    if (numeros.length <= 7) {
+      return `(${numeros.slice(0, 2)}) ${numeros.slice(2)}`;
     }
 
-    return `(${numeros.slice(
-      0,
-      2
-    )}) ${numeros.slice(
-      2,
-      7
-    )}-${numeros.slice(
+    return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(
       7,
-      11
+      11,
     )}`;
   }
 
@@ -356,39 +348,21 @@ function Agendamento() {
   // VALIDAR NOME
   // ==========================================
 
-  function validarNome(
-    nome: string
-  ) {
-    const nomeLimpo =
-      nome.trim();
+  function validarNome(nome: string) {
+    const nomeLimpo = nome.trim();
 
-    if (
-      nomeLimpo.length < 3
-    ) {
-      return (
-        "Digite um nome com pelo menos 3 letras."
-      );
+    if (nomeLimpo.length < 3) {
+      return "Digite um nome com pelo menos 3 letras.";
     }
 
-    if (
-      nomeLimpo.length > 60
-    ) {
-      return (
-        "Nome muito grande."
-      );
+    if (nomeLimpo.length > 60) {
+      return "Nome muito grande.";
     }
 
-    const regex =
-      /^[A-Za-zÀ-ÿ\s]+$/;
+    const regex = /^[A-Za-zÀ-ÿ\s]+$/;
 
-    if (
-      !regex.test(
-        nomeLimpo
-      )
-    ) {
-      return (
-        "O nome deve conter apenas letras."
-      );
+    if (!regex.test(nomeLimpo)) {
+      return "O nome deve conter apenas letras.";
     }
 
     return null;
@@ -399,40 +373,19 @@ function Agendamento() {
   // ==========================================
 
   async function confirmarAgendamento() {
-
     if (dataBloqueada) {
-      aviso(
-        "Esta data está bloqueada pelo barbeiro."
-      );
-
-      return;
-    }
-
-    if (
-      horarioSelecionado &&
-      horarioEstaBloqueado(
-        horarioSelecionado
-      )
-    ) {
-      aviso(
-        "Esse horário não está disponível."
-      );
-
-      setHorarioSelecionado("");
+      aviso("Esta data está bloqueada pelo barbeiro.");
 
       return;
     }
 
     if (domingo) {
-      aviso(
-        "A GG Barbearia não funciona aos domingos."
-      );
+      aviso("A GG Barbearia não funciona aos domingos.");
 
       return;
     }
 
-    const erroNome =
-      validarNome(nome);
+    const erroNome = validarNome(nome);
 
     if (erroNome) {
       aviso(erroNome);
@@ -440,29 +393,44 @@ function Agendamento() {
       return;
     }
 
-    const telefoneLimpo =
-      telefone.replace(
-        /\D/g,
-        ""
-      );
+    const telefoneLimpo = telefone.replace(/\D/g, "");
 
-    if (
-      telefoneLimpo.length !==
-      11
-    ) {
-      aviso(
-        "Digite um telefone válido."
-      );
+    if (telefoneLimpo.length !== 11) {
+      aviso("Digite um telefone válido.");
 
       return;
     }
 
-    if (
-      !horarioSelecionado
-    ) {
-      aviso(
-        "Escolha um horário."
-      );
+    if (!horarioSelecionado) {
+      aviso("Escolha um horário.");
+
+      return;
+    }
+
+    // ========================================
+    // VERIFICA DURAÇÃO NOVAMENTE
+    // ========================================
+
+    const inicioSelecionado = horarioParaMinutos(horarioSelecionado);
+
+    const fimSelecionado = inicioSelecionado + duracaoServico;
+
+    if (fimSelecionado > fimFuncionamento) {
+      aviso("Esse serviço não cabe nesse horário.");
+
+      setHorarioSelecionado("");
+
+      return;
+    }
+
+    // ========================================
+    // VERIFICA ALMOÇO
+    // ========================================
+
+    if (intervaloPassaPeloAlmoco(inicioSelecionado, fimSelecionado)) {
+      aviso("Esse serviço passa pelo horário de almoço.");
+
+      setHorarioSelecionado("");
 
       return;
     }
@@ -471,113 +439,23 @@ function Agendamento() {
     // VERIFICA BLOQUEIOS ATUALIZADOS
     // ========================================
 
-    const {
-      data: bloqueiosAtualizados,
-    } = await supabase
+    const { data: bloqueiosAtualizados } = await supabase
       .from("dias_bloqueados")
-      .select(
-        "id, data, motivo, hora_inicio, hora_fim"
-      )
-      .eq(
-        "data",
-        dataSelecionada
-      );
+      .select("id, data, motivo, hora_inicio, hora_fim")
+      .eq("data", dataSelecionada);
 
-    const bloqueiosAtuais =
-      (bloqueiosAtualizados as BloqueioHorario[]) ||
-      [];
+    const bloqueiosAtuais = (bloqueiosAtualizados as BloqueioHorario[]) || [];
 
-    const diaInteiroAtual =
-      bloqueiosAtuais.some(
-        (bloqueio) =>
-          bloqueio.hora_inicio === null &&
-          bloqueio.hora_fim === null
-      );
+    const diaInteiroAtual = bloqueiosAtuais.some(
+      (bloqueio) => bloqueio.hora_inicio === null && bloqueio.hora_fim === null,
+    );
 
-    if (
-      diaInteiroAtual
-    ) {
-      aviso(
-        "O barbeiro bloqueou esta data."
-      );
+    if (diaInteiroAtual) {
+      aviso("O barbeiro bloqueou esta data.");
 
       setDataBloqueada(true);
-      setBloqueios(
-        bloqueiosAtuais
-      );
-      setHorarioSelecionado("");
 
-      return;
-    }
-
-    // ========================================
-    // VERIFICA BLOQUEIO DO HORÁRIO
-    // ========================================
-
-    const horarioBloqueadoAgora =
-      bloqueiosAtuais.some(
-        (bloqueio) => {
-
-          if (
-            bloqueio.hora_inicio === null &&
-            bloqueio.hora_fim === null
-          ) {
-            return true;
-          }
-
-          if (
-            !bloqueio.hora_inicio ||
-            !bloqueio.hora_fim
-          ) {
-            return false;
-          }
-
-          const [horaInicio, minutoInicio] =
-            bloqueio.hora_inicio
-              .slice(0, 5)
-              .split(":")
-              .map(Number);
-
-          const [horaFim, minutoFim] =
-            bloqueio.hora_fim
-              .slice(0, 5)
-              .split(":")
-              .map(Number);
-
-          const [hora, minuto] =
-            horarioSelecionado
-              .split(":")
-              .map(Number);
-
-          const inicio =
-            horaInicio * 60 +
-            minutoInicio;
-
-          const fim =
-            horaFim * 60 +
-            minutoFim;
-
-          const horario =
-            hora * 60 +
-            minuto;
-
-          return (
-            horario >= inicio &&
-            horario < fim
-          );
-        }
-      );
-
-    if (
-      horarioBloqueadoAgora
-    ) {
-      aviso(
-        "Esse horário foi bloqueado pelo barbeiro."
-      );
-
-      setBloqueios(
-        bloqueiosAtuais
-      );
+      setBloqueios(bloqueiosAtuais);
 
       setHorarioSelecionado("");
 
@@ -585,36 +463,71 @@ function Agendamento() {
     }
 
     // ========================================
-    // VERIFICA HORÁRIO JÁ AGENDADO
+    // VERIFICA BLOQUEIO DO INTERVALO
     // ========================================
 
-    const {
-      data: existente,
-    } = await supabase
+    const bloqueioNoIntervalo = bloqueiosAtuais.some((bloqueio) => {
+      if (bloqueio.hora_inicio === null && bloqueio.hora_fim === null) {
+        return true;
+      }
+
+      if (!bloqueio.hora_inicio || !bloqueio.hora_fim) {
+        return false;
+      }
+
+      const inicioBloqueio = horarioParaMinutos(
+        bloqueio.hora_inicio.slice(0, 5),
+      );
+
+      const fimBloqueio = horarioParaMinutos(bloqueio.hora_fim.slice(0, 5));
+
+      return inicioSelecionado < fimBloqueio && fimSelecionado > inicioBloqueio;
+    });
+
+    if (bloqueioNoIntervalo) {
+      aviso("Esse horário foi bloqueado pelo barbeiro.");
+
+      setBloqueios(bloqueiosAtuais);
+
+      setHorarioSelecionado("");
+
+      return;
+    }
+
+    // ========================================
+    // VERIFICA AGENDAMENTOS ATUALIZADOS
+    // ========================================
+
+    const { data: agendamentosAtualizados } = await supabase
       .from("agendamentos")
-      .select("id")
-      .eq(
-        "data",
-        dataSelecionada
-      )
-      .eq(
-        "horario",
-        horarioSelecionado
-      )
-      .neq(
-        "status",
-        "Cancelado"
-      );
+      .select("id, horario, servico, duracao")
+      .eq("data", dataSelecionada)
+      .neq("status", "Cancelado");
 
-    if (
-      existente &&
-      existente.length > 0
-    ) {
-      erro(
-        "Esse horário já foi agendado."
-      );
+    const conflitos = (agendamentosAtualizados || []).some(
+      (agendamento: {
+        horario: string;
+        servico: string;
+        duracao: number | null;
+      }) => {
+        const inicioExistente = horarioParaMinutos(agendamento.horario);
 
-      buscarHorariosOcupados();
+        const duracaoExistente = agendamento.duracao || 30;
+
+        const fimExistente = inicioExistente + duracaoExistente;
+
+        return (
+          inicioSelecionado < fimExistente && fimSelecionado > inicioExistente
+        );
+      },
+    );
+
+    if (conflitos) {
+      erro("Esse horário ficou indisponível.");
+
+      await buscarAgendamentos();
+
+      setHorarioSelecionado("");
 
       return;
     }
@@ -623,61 +536,40 @@ function Agendamento() {
     // CRIA AGENDAMENTO
     // ========================================
 
-    const {
-      data: novoAgendamento,
-      error: insertError,
-    } = await supabase
+    const { data: novoAgendamento, error: insertError } = await supabase
       .from("agendamentos")
       .insert([
         {
-          nome,
+          nome: nome.trim(),
 
-          telefone:
-            telefoneLimpo,
+          telefone: telefoneLimpo,
 
-          servico:
-            servico.nome,
+          servico: servico.nome,
 
-          preco:
-            Number(
-              servico.preco
-                .replace("R$", "")
-                .replace(",", ".")
-            ),
+          preco: Number(servico.preco.replace("R$", "").replace(",", ".")),
 
-          horario:
-            horarioSelecionado,
+          duracao: duracaoServico,
 
-          data:
-            dataSelecionada,
+          horario: horarioSelecionado,
 
-          status:
-            "Pendente",
+          data: dataSelecionada,
+
+          status: "Pendente",
         },
       ])
       .select("id")
       .single();
 
-    if (
-      insertError
-    ) {
-      console.log(
-        insertError
-      );
+    if (insertError) {
+      console.log(insertError);
 
-      erro(
-        "Erro ao salvar agendamento."
-      );
+      erro("Erro ao salvar agendamento.");
 
       return;
     }
 
-    if (
-      !novoAgendamento
-    ) {
-      erro(
-        "Não foi possível identificar o agendamento."
-      );
+    if (!novoAgendamento) {
+      erro("Não foi possível identificar o agendamento.");
 
       return;
     }
@@ -686,51 +578,42 @@ function Agendamento() {
     // LINK DE CANCELAMENTO
     // ========================================
 
-    const link =
-      `${window.location.origin}/cancelar-agendamento?id=${novoAgendamento.id}`;
+    const link = `${window.location.origin}/cancelar-agendamento?id=${novoAgendamento.id}`;
 
-    setLinkCancelamento(
-      link
-    );
+    setLinkCancelamento(link);
+
+    // ========================================
+    // SALVAR DADOS DO CLIENTE
+    // ========================================
+
+    if (lembrarDados) {
+      localStorage.setItem(
+        "gg_cliente",
+        JSON.stringify({
+          nome: nome.trim(),
+
+          telefone: telefone,
+        }),
+      );
+    } else {
+      localStorage.removeItem("gg_cliente");
+    }
 
     // ========================================
     // SUCESSO
     // ========================================
 
-    if (lembrarDados) {
-  localStorage.setItem(
-    "gg_cliente",
-    JSON.stringify({
-      nome: nome.trim(),
-      telefone: telefone,
-    })
-  );
-} else {
-  localStorage.removeItem("gg_cliente");
-}
+    sucesso("Agendamento realizado com sucesso!");
 
-
-
-
-
-
-
-    sucesso(
-      "Agendamento realizado com sucesso!"
-    );
-
-    // Ativa a tela animada de sucesso
     setAgendamentoConfirmado(true);
 
-    // ========================================
-    // LIMPA CAMPOS
-    // ========================================
+    // Mantemos data e horário
+    // porque eles aparecem na tela de sucesso.
 
     setNome("");
     setTelefone("");
-    setHorarioSelecionado("");
 
-    buscarHorariosOcupados();
+    await buscarAgendamentos();
   }
 
   // ==========================================
@@ -739,9 +622,11 @@ function Agendamento() {
 
   function novoAgendamento() {
     setAgendamentoConfirmado(false);
+
     setLinkCancelamento("");
 
     setDataSelecionada(dataHoje);
+
     setHorarioSelecionado("");
   }
 
@@ -751,43 +636,25 @@ function Agendamento() {
 
   return (
     <div className="agendamento">
-
       <div className="agendamento-card">
-
         {!agendamentoConfirmado ? (
-
           <>
-            <h1>
-              Agendamento
-            </h1>
+            <h1>Agendamento</h1>
 
             {/* SERVIÇO */}
 
             <div className="info-servico">
+              <h2>{servico.nome}</h2>
 
-              <h2>
-                {servico.nome}
-              </h2>
+              <p>Preço: {servico.preco}</p>
 
-              <p>
-                Preço:{" "}
-                {servico.preco}
-              </p>
-
-              <p>
-                Duração:{" "}
-                {servico.duracao}
-              </p>
-
+              <p>Duração: {servico.duracao}</p>
             </div>
 
             {/* NOME */}
 
             <div className="input-group">
-
-              <label>
-                Nome
-              </label>
+              <label>Nome</label>
 
               <input
                 type="text"
@@ -795,306 +662,172 @@ function Agendamento() {
                 value={nome}
                 maxLength={60}
                 onChange={(e) => {
+                  const valor = e.target.value.replace(/\s{2,}/g, " ");
 
-                  const valor =
-                    e.target.value.replace(
-                      /\s{2,}/g,
-                      " "
-                    );
-
-                  setNome(
-                    valor
-                  );
-
+                  setNome(valor);
                 }}
               />
-
             </div>
 
             {/* TELEFONE */}
 
             <div className="input-group">
-
-              <label>
-                Telefone
-              </label>
+              <label>Telefone</label>
 
               <input
                 type="tel"
                 placeholder="(99) 99999-9999"
                 value={telefone}
                 maxLength={15}
-                onChange={(e) =>
-                  setTelefone(
-                    formatarTelefone(
-                      e.target.value
-                    )
-                  )
-                }
+                onChange={(e) => setTelefone(formatarTelefone(e.target.value))}
               />
-
             </div>
 
-            <label className="lembrar-dados">
-  <input
-    type="checkbox"
-    checked={lembrarDados}
-    onChange={(e) =>
-      setLembrarDados(e.target.checked)
-    }
-  />
+            {/* LEMBRAR DADOS */}
 
-  <span>
-    Lembrar meus dados neste aparelho
-  </span>
-</label>
+            <label className="lembrar-dados">
+              <input
+                type="checkbox"
+                checked={lembrarDados}
+                onChange={(e) => setLembrarDados(e.target.checked)}
+              />
+
+              <span>Lembrar meus dados neste aparelho</span>
+            </label>
 
             {/* DATA */}
 
             <div className="input-group">
-
-              <label>
-                Data
-              </label>
+              <label>Data</label>
 
               <DatePicker
-
-                selected={
-                  parseISO(
-                    dataSelecionada
-                  )
-                }
-
-                onChange={(
-                  date: Date | null
-                ) => {
-
+                selected={parseISO(dataSelecionada)}
+                onChange={(date: Date | null) => {
                   if (!date) {
                     return;
                   }
 
-                  const data =
-                    format(
-                      date,
-                      "yyyy-MM-dd"
-                    );
+                  const data = format(date, "yyyy-MM-dd");
 
-                  setDataSelecionada(
-                    data
-                  );
+                  setDataSelecionada(data);
 
-                  setHorarioSelecionado(
-                    ""
-                  );
-
+                  setHorarioSelecionado("");
                 }}
-
-                minDate={
-                  new Date()
-                }
-
+                minDate={new Date()}
                 locale={ptBR}
-
                 dateFormat="dd/MM/yyyy"
-
-                placeholderText={
-                  "Selecione uma data"
-                }
-
-                filterDate={(
-                  date
-                ) =>
-                  date.getDay() !==
-                  0
-                }
-
+                placeholderText={"Selecione uma data"}
+                filterDate={(date) => date.getDay() !== 0}
               />
-
             </div>
 
             {/* HORÁRIOS */}
 
-            <h3>
-              Escolha um horário
-            </h3>
+            <h3>Escolha um horário</h3>
 
             {domingo ? (
-
               <p className="sem-horarios">
-                A GG Barbearia não funciona
-                aos domingos.
+                A GG Barbearia não funciona aos domingos.
               </p>
-
             ) : dataBloqueada ? (
-
               <p className="sem-horarios">
-                O barbeiro não atenderá
-                nesta data.
+                O barbeiro não atenderá nesta data.
               </p>
-
             ) : horariosDisponiveis.length === 0 ? (
-
               <p className="sem-horarios">
-                Não há horários disponíveis
-                para esta data.
+                Não há horários disponíveis para este serviço nesta data.
               </p>
-
             ) : (
-
               <div className="horarios">
-
-                {horariosDisponiveis.map(
-                  (horario) => (
-
-                    <button
-                      key={horario}
-                      type="button"
-                      className={
-                        horarioSelecionado ===
-                        horario
-                          ? "horario ativo"
-                          : "horario"
-                      }
-                      onClick={() =>
-                        setHorarioSelecionado(
-                          horario
-                        )
-                      }
-                    >
-                      {horario}
-                    </button>
-
-                  )
-                )}
-
+                {horariosDisponiveis.map((horario) => (
+                  <button
+                    key={horario}
+                    type="button"
+                    className={
+                      horarioSelecionado === horario
+                        ? "horario ativo"
+                        : "horario"
+                    }
+                    onClick={() => setHorarioSelecionado(horario)}
+                  >
+                    {horario}
+                  </button>
+                ))}
               </div>
-
             )}
 
             {/* CONFIRMAR */}
 
             <button
               className="botao-confirmar"
-              onClick={
-                confirmarAgendamento
-              }
-              disabled={
-                domingo ||
-                dataBloqueada ||
-                !horarioSelecionado
-              }
+              onClick={confirmarAgendamento}
+              disabled={domingo || dataBloqueada || !horarioSelecionado}
             >
               Confirmar Agendamento
             </button>
-
           </>
-
         ) : (
-
           /* ===================================
              TELA DE SUCESSO
              =================================== */
 
           <div className="sucesso-agendamento">
-
             <div className="check-animado">
-
               <div className="check-circulo">
-
-                <span>
-                  ✓
-                </span>
-
+                <span>✓</span>
               </div>
-
             </div>
 
-            <h1>
-              Agendamento confirmado!
-            </h1>
+            <h1>Agendamento confirmado!</h1>
 
             <p className="sucesso-subtitulo">
               Seu horário foi reservado com sucesso.
             </p>
 
             <div className="resumo-agendamento">
-
               <div className="resumo-item">
+                <span>💈 Serviço</span>
 
-                <span>
-                  💈 Serviço
-                </span>
-
-                <strong>
-                  {servico.nome}
-                </strong>
-
+                <strong>{servico.nome}</strong>
               </div>
 
               <div className="resumo-item">
+                <span>📅 Data</span>
 
-                <span>
-                  📅 Data
-                </span>
-
-                <strong>
-                  {dataSelecionada}
-                </strong>
-
+                <strong>{dataSelecionada}</strong>
               </div>
 
               <div className="resumo-item">
+                <span>🕐 Horário</span>
 
-                <span>
-                  🕐 Horário
-                </span>
-
-                <strong>
-                  {horarioSelecionado}
-                </strong>
-
+                <strong>{horarioSelecionado}</strong>
               </div>
-
             </div>
 
             {linkCancelamento && (
-
               <div className="cancelamento-sucesso">
-
-                <p>
-                  Precisou desistir do corte?
-                </p>
+                <p>Precisou desistir do corte?</p>
 
                 <a
-                  href={
-                    linkCancelamento
-                  }
+                  href={linkCancelamento}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
                   Cancelar agendamento
                 </a>
-
               </div>
-
             )}
 
             <button
               type="button"
               className="botao-novo-agendamento"
-              onClick={
-                novoAgendamento
-              }
+              onClick={novoAgendamento}
             >
               Fazer outro agendamento
             </button>
-
           </div>
-
         )}
-
       </div>
-
     </div>
   );
 }

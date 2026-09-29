@@ -1,24 +1,11 @@
-export const horarios = [
-  "08:00",
-  "08:30",
-  "09:00",
-  "09:30",
-  "10:00",
-  "10:30",
-  "11:00",
-  "11:30",
-  "12:00",
-  "12:30",
-  "13:00",
-  "13:30",
-  "14:00",
-  "14:30",
-  "15:00",
-  "15:30",
-  "16:00",
-  "16:30",
-  "17:00",
-  "17:30",
-  "18:00",
-  "18:30",
-];
+export const horarios: string[] = [];
+
+for (let minutos = 8 * 60; minutos <= 18 * 60; minutos += 5) {
+  const hora = Math.floor(minutos / 60)
+    .toString()
+    .padStart(2, "0");
+
+  const minuto = (minutos % 60).toString().padStart(2, "0");
+
+  horarios.push(`${hora}:${minuto}`);
+}
