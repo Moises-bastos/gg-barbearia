@@ -19,8 +19,11 @@ type Agendamento = {
 
 function CancelarAgendamento() {
   const [telefone, setTelefone] = useState("");
+
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
+
   const [buscando, setBuscando] = useState(false);
+
   const [cancelando, setCancelando] = useState<number | null>(null);
 
   function formatarTelefone(valor: string) {
@@ -50,28 +53,42 @@ function CancelarAgendamento() {
     return new Date(`${agendamento.data}T${agendamento.horario}:00`);
   }
 
-  function ordenarAgendamentos(agendamentos: Agendamento[]) {
-    const agora = new Date();
+  function agendamentoFuturo(agendamento: Agendamento) {
+    return dataHoraAgendamento(agendamento) >= new Date();
+  }
 
-    return [...agendamentos].sort((a, b) => {
-      const dataA = dataHoraAgendamento(a);
-      const dataB = dataHoraAgendamento(b);
+  function obterProximosAgendamentos() {
+    return agendamentos
+      .filter((agendamento) => {
+        const futuro = agendamentoFuturo(agendamento);
 
-      const futuroA = dataA >= agora;
-      const futuroB = dataB >= agora;
+        const statusValido =
+          agendamento.status === "Pendente" ||
+          agendamento.status === "Confirmado";
 
-      // Primeiro vêm os agendamentos atuais/futuros
-      if (futuroA && !futuroB) {
-        return -1;
-      }
+        return futuro && statusValido;
+      })
+      .sort(
+        (a, b) =>
+          dataHoraAgendamento(a).getTime() - dataHoraAgendamento(b).getTime(),
+      );
+  }
 
-      if (!futuroA && futuroB) {
-        return 1;
-      }
+  function obterHistorico() {
+    return agendamentos
+      .filter((agendamento) => {
+        const passado = !agendamentoFuturo(agendamento);
 
-      // Dentro do mesmo grupo, ordena pela data mais próxima
-      return dataA.getTime() - dataB.getTime();
-    });
+        const statusHistorico =
+          agendamento.status === "Concluído" ||
+          agendamento.status === "Cancelado";
+
+        return passado || statusHistorico;
+      })
+      .sort(
+        (a, b) =>
+          dataHoraAgendamento(b).getTime() - dataHoraAgendamento(a).getTime(),
+      );
   }
 
   async function buscarAgendamentoPorId(id: number) {
@@ -98,7 +115,6 @@ function CancelarAgendamento() {
 
     if (data.status !== "Pendente" && data.status !== "Confirmado") {
       aviso("Este agendamento não está mais disponível para cancelamento.");
-      return;
     }
 
     setAgendamentos([data as Agendamento]);
@@ -118,30 +134,23 @@ function CancelarAgendamento() {
       .from("agendamentos")
       .select("*")
       .eq("telefone", telefoneLimpo)
-      .in("status", ["Pendente", "Confirmado"])
       .order("data", { ascending: true })
       .order("horario", { ascending: true });
 
     setBuscando(false);
 
-    console.log("📞 Telefone pesquisado:", telefoneLimpo);
-    console.log("🔎 Agendamentos encontrados:", data);
-    console.log("❌ Erro:", error);
-
     if (error) {
       console.error(error);
+
       erro("Erro ao buscar agendamentos.");
+
       return;
     }
 
-    const agendamentosOrdenados = ordenarAgendamentos(
-      (data as Agendamento[]) || [],
-    );
+    setAgendamentos((data as Agendamento[]) || []);
 
-    setAgendamentos(agendamentosOrdenados);
-
-    if (agendamentosOrdenados.length === 0) {
-      aviso("Nenhum agendamento ativo encontrado para este telefone.");
+    if (!data || data.length === 0) {
+      aviso("Nenhum agendamento encontrado para este telefone.");
     }
   }
 
@@ -176,7 +185,14 @@ function CancelarAgendamento() {
     sucesso("Agendamento cancelado com sucesso!");
 
     setAgendamentos((atual) =>
-      atual.filter((agendamento) => agendamento.id !== id),
+      atual.map((agendamento) =>
+        agendamento.id === id
+          ? {
+              ...agendamento,
+              status: "Cancelado",
+            }
+          : agendamento,
+      ),
     );
 
     setCancelando(null);
@@ -201,10 +217,14 @@ function CancelarAgendamento() {
     buscarAgendamentoPorId(idNumerico);
   }, []);
 
+  const proximosAgendamentos = obterProximosAgendamentos();
+
+  const historico = obterHistorico();
+
   return (
     <div className="cancelar-agendamento-page">
       <div className="cancelar-agendamento-container">
-        <h1>Cancelar agendamento</h1>
+        <h1>Meus agendamentos</h1>
 
         <p className="cancelar-descricao">
           Digite o telefone usado no agendamento para consultar seus cortes.
@@ -234,51 +254,114 @@ function CancelarAgendamento() {
         </div>
 
         {agendamentos.length > 0 && (
-          <div className="resultado-cancelamento">
-            <h2>Seus agendamentos</h2>
+          <>
+            {/* ========================= */}
+            {/* PRÓXIMOS AGENDAMENTOS */}
+            {/* ========================= */}
 
-            <div className="lista-cancelamentos">
-              {agendamentos.map((agendamento) => (
-                <div className="cancelamento-card" key={agendamento.id}>
-                  <h3>{agendamento.servico}</h3>
+            {proximosAgendamentos.length > 0 && (
+              <div className="resultado-cancelamento">
+                <h2>📅 Próximos agendamentos</h2>
 
-                  <div className="dados-cancelamento">
-                    <p>
-                      👤 <strong>Cliente:</strong> {agendamento.nome}
-                    </p>
+                <div className="lista-cancelamentos">
+                  {proximosAgendamentos.map((agendamento) => (
+                    <div className="cancelamento-card" key={agendamento.id}>
+                      <h3>{agendamento.servico}</h3>
 
-                    <p>
-                      📅 <strong>Data:</strong> {formatarData(agendamento.data)}
-                    </p>
+                      <div className="dados-cancelamento">
+                        <p>
+                          👤 <strong>Cliente:</strong> {agendamento.nome}
+                        </p>
 
-                    <p>
-                      🕐 <strong>Horário:</strong> {agendamento.horario}
-                    </p>
+                        <p>
+                          📅 <strong>Data:</strong>{" "}
+                          {formatarData(agendamento.data)}
+                        </p>
 
-                    <p>
-                      💰 <strong>Valor:</strong> R${" "}
-                      {Number(agendamento.preco).toFixed(2)}
-                    </p>
+                        <p>
+                          🕐 <strong>Horário:</strong> {agendamento.horario}
+                        </p>
 
-                    <p>
-                      📌 <strong>Status:</strong> {agendamento.status}
-                    </p>
-                  </div>
+                        <p>
+                          💰 <strong>Valor:</strong> R${" "}
+                          {Number(agendamento.preco).toFixed(2)}
+                        </p>
 
-                  <button
-                    type="button"
-                    className="botao-cancelar"
-                    onClick={() => cancelarAgendamento(agendamento.id)}
-                    disabled={cancelando === agendamento.id}
-                  >
-                    {cancelando === agendamento.id
-                      ? "Cancelando..."
-                      : "❌ Cancelar agendamento"}
-                  </button>
+                        <p>
+                          📌 <strong>Status:</strong> {agendamento.status}
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="botao-cancelar"
+                        onClick={() => cancelarAgendamento(agendamento.id)}
+                        disabled={cancelando === agendamento.id}
+                      >
+                        {cancelando === agendamento.id
+                          ? "Cancelando..."
+                          : "❌ Cancelar agendamento"}
+                      </button>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
+              </div>
+            )}
+
+            {/* ========================= */}
+            {/* HISTÓRICO */}
+            {/* ========================= */}
+
+            {historico.length > 0 && (
+              <div className="resultado-cancelamento historico-cliente">
+                <h2>📋 Histórico</h2>
+
+                <div className="lista-cancelamentos">
+                  {historico.map((agendamento) => (
+                    <div
+                      className={`cancelamento-card historico-card ${
+                        agendamento.status === "Cancelado"
+                          ? "historico-cancelado"
+                          : ""
+                      }`}
+                      key={agendamento.id}
+                    >
+                      <h3>{agendamento.servico}</h3>
+
+                      <div className="dados-cancelamento">
+                        <p>
+                          📅 <strong>Data:</strong>{" "}
+                          {formatarData(agendamento.data)}
+                        </p>
+
+                        <p>
+                          🕐 <strong>Horário:</strong> {agendamento.horario}
+                        </p>
+
+                        <p>
+                          💰 <strong>Valor:</strong> R${" "}
+                          {Number(agendamento.preco).toFixed(2)}
+                        </p>
+
+                        <p>
+                          📌 <strong>Status:</strong>{" "}
+                          <span
+                            className={
+                              agendamento.status === "Cancelado"
+                                ? "status-historico-cancelado"
+                                : "status-historico-concluido"
+                            }
+                          >
+                            {agendamento.status}
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
