@@ -1,264 +1,279 @@
-.cancelar-agendamento-page {
-    min-height: 100vh;
-    width: 100%;
+/* =========================================
+   PÁGINA CONSULTAR AGENDAMENTOS
+========================================= */
 
-    background: #26241f;
-
-    display: flex;
-    justify-content: center;
-
-    padding: 100px 20px 50px;
+.cancelar-agendamento {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 50px 20px;
+  background: #171614;
+  color: #fff;
+  box-sizing: border-box;
 }
 
-.cancelar-agendamento-container {
-    width: 100%;
-    max-width: 800px;
+.cancelar-card {
+  width: 100%;
+  max-width: 700px;
+  background: #26241f;
+  border: 1px solid #3a3730;
+  border-radius: 16px;
+  padding: 35px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.35);
+  box-sizing: border-box;
 }
 
-/* ===== TÍTULO ===== */
-
-.cancelar-agendamento-container h1 {
-    color: #E6D2B5;
-    text-align: center;
-
-    font-size: 38px;
-
-    margin-bottom: 10px;
+.cancelar-card h1 {
+  margin: 0 0 10px;
+  text-align: center;
+  color: #e6d2b5;
+  font-size: 30px;
 }
 
-.cancelar-descricao {
-    color: #fff;
-    text-align: center;
-
-    font-size: 16px;
-
-    margin-bottom: 35px;
+.descricao {
+  margin: 0 auto 30px;
+  max-width: 500px;
+  text-align: center;
+  color: #bdb9b0;
+  line-height: 1.5;
 }
 
-/* ===== BUSCA ===== */
+/* =========================================
+   INPUT
+========================================= */
 
-.buscar-cancelamento {
-    display: flex;
-
-    gap: 12px;
-
-    width: 100%;
-
-    margin-bottom: 40px;
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
 }
 
-.buscar-cancelamento input {
-    flex: 1;
-
-    padding: 14px 16px;
-
-    border: 1px solid #444;
-
-    border-radius: 8px;
-
-    background: #1d1d1d;
-
-    color: #fff;
-
-    font-size: 16px;
-
-    outline: none;
+.input-group label {
+  color: #e6d2b5;
+  font-weight: 600;
 }
 
-.buscar-cancelamento input:focus {
-    border-color: #D9C2A3;
+.input-group input {
+  width: 100%;
+  padding: 14px 15px;
+  border: 1px solid #4a463d;
+  border-radius: 8px;
+  background: #1d1c19;
+  color: #fff;
+  font-size: 16px;
+  outline: none;
+  box-sizing: border-box;
+  transition: 0.2s;
 }
 
-.buscar-cancelamento input::placeholder {
-    color: #888;
+.input-group input::placeholder {
+  color: #77736b;
 }
 
-.buscar-cancelamento button {
-    background: #D9C2A3;
-
-    color: #1E1F1A;
-
-    border: none;
-
-    border-radius: 8px;
-
-    padding: 0 20px;
-
-    font-size: 15px;
-
-    font-weight: 700;
-
-    cursor: pointer;
-
-    transition: 0.3s;
+.input-group input:focus {
+  border-color: #e6d2b5;
+  box-shadow: 0 0 0 2px rgba(230, 210, 181, 0.08);
 }
 
-.buscar-cancelamento button:hover {
-    transform: translateY(-2px);
+/* =========================================
+   BOTÃO BUSCAR
+========================================= */
 
-    opacity: 0.9;
+.botao-buscar {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 8px;
+  background: #e6d2b5;
+  color: #26241f;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s;
 }
 
-.buscar-cancelamento button:disabled {
-    opacity: 0.6;
-
-    cursor: not-allowed;
-
-    transform: none;
+.botao-buscar:hover {
+  background: #d6c09e;
+  transform: translateY(-1px);
 }
 
-/* ===== RESULTADO ===== */
-
-.resultado-cancelamento h2 {
-    color: #E6D2B5;
-
-    text-align: center;
-
-    margin-bottom: 25px;
-
-    font-size: 25px;
+.botao-buscar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
-/* ===== LISTA ===== */
+/* =========================================
+   SEM AGENDAMENTOS
+========================================= */
 
-.lista-cancelamentos {
-    display: grid;
-
-    grid-template-columns:
-        repeat(
-            auto-fit,
-            minmax(280px, 1fr)
-        );
-
-    gap: 20px;
+.sem-agendamentos {
+  margin-top: 30px;
+  padding: 20px;
+  text-align: center;
+  border-radius: 10px;
+  background: #1d1c19;
+  border: 1px solid #3a3730;
+  color: #aaa59b;
 }
 
-/* ===== CARD ===== */
+/* =========================================
+   PRÓXIMOS AGENDAMENTOS
+========================================= */
 
-.cancelamento-card {
-    background: #1d1d1d;
-
-    border: 1px solid #333;
-
-    border-radius: 12px;
-
-    padding: 25px;
-
-    transition: 0.3s;
+.proximos-cliente {
+  margin-top: 40px;
 }
 
-.cancelamento-card:hover {
-    transform: translateY(-3px);
-
-    border-color: #D9C2A3;
+.proximos-cliente h2,
+.historico-cliente h2 {
+  margin-bottom: 20px;
+  color: #e6d2b5;
+  font-size: 21px;
 }
 
-.cancelamento-card h3 {
-    color: #E6D2B5;
+/* =========================================
+   CARD DE AGENDAMENTO
+========================================= */
 
-    font-size: 22px;
-
-    margin-bottom: 20px;
+.agendamento-cliente-card {
+  margin-bottom: 18px;
+  padding: 22px;
+  background: #1d1c19;
+  border: 1px solid #3a3730;
+  border-radius: 12px;
+  transition: 0.2s;
 }
 
-/* ===== DADOS ===== */
-
-.dados-cancelamento {
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 10px;
-
-    margin-bottom: 25px;
+.agendamento-cliente-card:hover {
+  border-color: #5a5449;
 }
 
-.dados-cancelamento p {
-    color: #fff;
-
-    margin: 0;
-
-    font-size: 15px;
+.agendamento-cliente-card h3 {
+  margin: 0 0 15px;
+  color: #fff;
+  font-size: 19px;
 }
 
-.dados-cancelamento strong {
-    color: #D9C2A3;
+.agendamento-cliente-card p {
+  margin: 7px 0;
+  color: #c5c1b8;
 }
 
-/* ===== BOTÃO CANCELAR ===== */
+/* =========================================
+   STATUS
+========================================= */
+
+.status-cliente {
+  margin-top: 14px !important;
+  font-weight: 700;
+}
+
+.status-cliente.pendente {
+  color: #e6d2b5;
+}
+
+.status-cliente.confirmado {
+  color: #7ed957;
+}
+
+/* =========================================
+   BOTÃO CANCELAR
+========================================= */
 
 .botao-cancelar {
-    width: 100%;
-
-    padding: 12px;
-
-    background: #c0392b;
-
-    color: #fff;
-
-    border: none;
-
-    border-radius: 8px;
-
-    font-size: 14px;
-
-    font-weight: 700;
-
-    cursor: pointer;
-
-    transition: 0.3s;
+  margin-top: 15px;
+  width: 100%;
+  padding: 11px;
+  border: 1px solid #8f3939;
+  border-radius: 7px;
+  background: transparent;
+  color: #ff6b6b;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s;
 }
 
 .botao-cancelar:hover {
-    background: #a93226;
-
-    transform: translateY(-2px);
+  background: #8f3939;
+  color: #fff;
 }
 
 .botao-cancelar:disabled {
-    opacity: 0.6;
-
-    cursor: not-allowed;
-
-    transform: none;
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-/* ===== RESPONSIVIDADE ===== */
+/* =========================================
+   HISTÓRICO
+========================================= */
+
+.historico-cliente {
+  margin-top: 45px;
+}
+
+.historico-card {
+  margin-bottom: 15px;
+  padding: 20px;
+  background: #1d1c19;
+  border: 1px solid #3a3730;
+  border-radius: 12px;
+  opacity: 0.9;
+}
+
+.historico-card h3 {
+  margin: 0 0 14px;
+  color: #ddd;
+  font-size: 18px;
+}
+
+.historico-card p {
+  margin: 7px 0;
+  color: #aaa69d;
+}
+
+.historico-cancelado {
+  border-color: #7f2d2d;
+}
+
+.status-historico-cancelado {
+  color: #ff6b6b !important;
+  font-weight: 700;
+}
+
+.status-historico-concluido {
+  color: #7ed957 !important;
+  font-weight: 700;
+}
+
+/* =========================================
+   RESPONSIVO
+========================================= */
 
 @media (max-width: 600px) {
+  .cancelar-agendamento {
+    padding: 25px 12px;
+  }
 
-    .cancelar-agendamento-page {
-        padding: 80px 20px 40px;
-    }
+  .cancelar-card {
+    padding: 25px 18px;
+    border-radius: 12px;
+  }
 
-    .cancelar-agendamento-container h1 {
-        font-size: 28px;
-    }
+  .cancelar-card h1 {
+    font-size: 25px;
+  }
 
-    .cancelar-descricao {
-        font-size: 14px;
-    }
+  .descricao {
+    font-size: 14px;
+  }
 
-    .buscar-cancelamento {
-        flex-direction: column;
-    }
-
-    .buscar-cancelamento input {
-        width: 100%;
-        box-sizing: border-box;
-    }
-
-    .buscar-cancelamento button {
-        width: 100%;
-
-        padding: 13px;
-    }
-
-    .lista-cancelamentos {
-        grid-template-columns: 1fr;
-    }
-
-    .cancelamento-card {
-        padding: 20px;
-    }
+  .agendamento-cliente-card,
+  .historico-card {
+    padding: 18px;
+  }
 }

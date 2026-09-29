@@ -1,9 +1,8 @@
 import "./style.css";
 
 import { useEffect, useState } from "react";
-
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "../../../lib/supabase";
-
 import { sucesso, erro, aviso } from "../../../utils/toast";
 
 type Agendamento = {
@@ -15,19 +14,24 @@ type Agendamento = {
   horario: string;
   data: string;
   status: string;
+  duracao: number | null;
 };
 
 function CancelarAgendamento() {
+  const [searchParams] = useSearchParams();
+
   const [telefone, setTelefone] = useState("");
-
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
-
-  const [buscando, setBuscando] = useState(false);
-
+  const [buscou, setBuscou] = useState(false);
+  const [carregando, setCarregando] = useState(false);
   const [cancelando, setCancelando] = useState<number | null>(null);
 
+  // ==========================================
+  // FORMATAR TELEFONE
+  // ==========================================
+
   function formatarTelefone(valor: string) {
-    const numeros = valor.replace(/\D/g, "").slice(0, 11);
+    const numeros = valor.replace(/\D/g, "");
 
     if (numeros.length <= 2) {
       return numeros;
@@ -43,120 +47,113 @@ function CancelarAgendamento() {
     )}-${numeros.slice(7, 11)}`;
   }
 
+  // ==========================================
+  // FORMATAR DATA
+  // ==========================================
+
   function formatarData(data: string) {
     const [ano, mes, dia] = data.split("-");
 
     return `${dia}/${mes}/${ano}`;
   }
 
-  function dataHoraAgendamento(agendamento: Agendamento) {
-    return new Date(`${agendamento.data}T${agendamento.horario}:00`);
-  }
+  // ==========================================
+  // VERIFICAR SE É FUTURO
+  // ==========================================
 
   function agendamentoFuturo(agendamento: Agendamento) {
-    return dataHoraAgendamento(agendamento) >= new Date();
+    const agora = new Date();
+
+    const dataHora = new Date(`${agendamento.data}T${agendamento.horario}`);
+
+    return dataHora > agora;
   }
 
-  function obterProximosAgendamentos() {
-    return agendamentos
-      .filter((agendamento) => {
-        const futuro = agendamentoFuturo(agendamento);
+  // ==========================================
+  // BUSCAR AGENDAMENTOS
+  // ==========================================
 
-        const statusValido =
-          agendamento.status === "Pendente" ||
-          agendamento.status === "Confirmado";
-
-        return futuro && statusValido;
-      })
-      .sort(
-        (a, b) =>
-          dataHoraAgendamento(a).getTime() - dataHoraAgendamento(b).getTime(),
-      );
-  }
-
-  function obterHistorico() {
-    return agendamentos
-      .filter((agendamento) => {
-        const passado = !agendamentoFuturo(agendamento);
-
-        const statusHistorico =
-          agendamento.status === "Concluído" ||
-          agendamento.status === "Cancelado";
-
-        return passado || statusHistorico;
-      })
-      .sort(
-        (a, b) =>
-          dataHoraAgendamento(b).getTime() - dataHoraAgendamento(a).getTime(),
-      );
-  }
-
-  async function buscarAgendamentoPorId(id: number) {
-    setBuscando(true);
-
-    const { data, error } = await supabase
-      .from("agendamentos")
-      .select("*")
-      .eq("id", id)
-      .maybeSingle();
-
-    setBuscando(false);
-
-    if (error) {
-      console.error(error);
-      erro("Erro ao buscar o agendamento.");
-      return;
-    }
-
-    if (!data) {
-      aviso("Agendamento não encontrado.");
-      return;
-    }
-
-    if (data.status !== "Pendente" && data.status !== "Confirmado") {
-      aviso("Este agendamento não está mais disponível para cancelamento.");
-    }
-
-    setAgendamentos([data as Agendamento]);
-  }
-
-  async function buscarAgendamentos() {
-    const telefoneLimpo = telefone.replace(/\D/g, "");
+  async function buscarAgendamentos(telefoneBusca?: string) {
+    const telefoneLimpo = (telefoneBusca ?? telefone).replace(/\D/g, "");
 
     if (telefoneLimpo.length !== 11) {
       aviso("Digite um telefone válido.");
       return;
     }
 
-    setBuscando(true);
+    setCarregando(true);
+    setBuscou(true);
 
     const { data, error } = await supabase
       .from("agendamentos")
-      .select("*")
+      .select(
+        "id, nome, telefone, servico, preco, horario, data, status, duracao",
+      )
       .eq("telefone", telefoneLimpo)
       .order("data", { ascending: true })
       .order("horario", { ascending: true });
 
-    setBuscando(false);
+    setCarregando(false);
 
     if (error) {
-      console.error(error);
+      console.error("Erro ao buscar agendamentos:", error);
 
-      erro("Erro ao buscar agendamentos.");
+      erro("Não foi possível buscar seus agendamentos.");
 
+      setAgendamentos([]);
       return;
     }
 
     setAgendamentos((data as Agendamento[]) || []);
-
-    if (!data || data.length === 0) {
-      aviso("Nenhum agendamento encontrado para este telefone.");
-    }
   }
 
+  // ==========================================
+  // CARREGAR PELO LINK DO AGENDAMENTO
+  // ==========================================
+
+  useEffect(() => {
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return;
+    }
+
+    async function carregarAgendamentoDoLink() {
+      const { data, error } = await supabase
+        .from("agendamentos")
+        .select(
+          "id, nome, telefone, servico, preco, horario, data, status, duracao",
+        )
+        .eq("id", Number(id))
+        .single();
+
+      if (error || !data) {
+        console.error("Erro ao carregar agendamento:", error);
+
+        return;
+      }
+
+      const agendamento = data as Agendamento;
+
+      setTelefone(formatarTelefone(agendamento.telefone));
+
+      await buscarAgendamentos(agendamento.telefone);
+    }
+
+    carregarAgendamentoDoLink();
+  }, [searchParams]);
+
+  // ==========================================
+  // CANCELAR AGENDAMENTO
+  // ==========================================
+
   async function cancelarAgendamento(id: number) {
+    if (cancelando !== null) {
+      return;
+    }
+
     const confirmar = window.confirm(
-      "Deseja realmente cancelar este agendamento?",
+      "Tem certeza que deseja cancelar este agendamento?",
     );
 
     if (!confirmar) {
@@ -172,194 +169,186 @@ function CancelarAgendamento() {
       })
       .eq("id", id);
 
+    setCancelando(null);
+
     if (error) {
-      console.error(error);
+      console.error("Erro ao cancelar agendamento:", error);
 
-      erro("Erro ao cancelar agendamento.");
-
-      setCancelando(null);
+      erro("Não foi possível cancelar o agendamento.");
 
       return;
     }
 
     sucesso("Agendamento cancelado com sucesso!");
 
-    setAgendamentos((atual) =>
-      atual.map((agendamento) =>
-        agendamento.id === id
-          ? {
-              ...agendamento,
-              status: "Cancelado",
-            }
-          : agendamento,
-      ),
-    );
-
-    setCancelando(null);
+    await buscarAgendamentos();
   }
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
+  // ==========================================
+  // SEPARAR PRÓXIMOS E HISTÓRICO
+  // ==========================================
 
-    const id = params.get("id");
+  const proximosAgendamentos = agendamentos.filter(
+    (agendamento) =>
+      agendamentoFuturo(agendamento) &&
+      (agendamento.status === "Pendente" ||
+        agendamento.status === "Confirmado"),
+  );
 
-    if (!id) {
-      return;
+  const historico = agendamentos.filter((agendamento) => {
+    if (
+      agendamento.status === "Concluído" ||
+      agendamento.status === "Cancelado"
+    ) {
+      return true;
     }
 
-    const idNumerico = Number(id);
+    return !agendamentoFuturo(agendamento);
+  });
 
-    if (!Number.isInteger(idNumerico)) {
-      aviso("Link de agendamento inválido.");
-      return;
-    }
-
-    buscarAgendamentoPorId(idNumerico);
-  }, []);
-
-  const proximosAgendamentos = obterProximosAgendamentos();
-
-  const historico = obterHistorico();
+  // ==========================================
+  // TELA
+  // ==========================================
 
   return (
-    <div className="cancelar-agendamento-page">
-      <div className="cancelar-agendamento-container">
-        <h1>Meus agendamentos</h1>
+    <div className="cancelar-agendamento">
+      <div className="cancelar-card">
+        <h1>Consultar agendamentos</h1>
 
-        <p className="cancelar-descricao">
+        <p className="descricao">
           Digite o telefone usado no agendamento para consultar seus cortes.
         </p>
 
-        <div className="buscar-cancelamento">
+        {/* TELEFONE */}
+
+        <div className="input-group">
+          <label>Telefone</label>
+
           <input
             type="tel"
-            placeholder="(86) 99999-9999"
+            placeholder="(99) 99999-9999"
             value={telefone}
             maxLength={15}
             onChange={(e) => setTelefone(formatarTelefone(e.target.value))}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                buscarAgendamentos();
-              }
-            }}
           />
-
-          <button
-            type="button"
-            onClick={buscarAgendamentos}
-            disabled={buscando}
-          >
-            {buscando ? "Buscando..." : "Buscar agendamentos"}
-          </button>
         </div>
 
-        {agendamentos.length > 0 && (
+        {/* BOTÃO CONSULTAR */}
+
+        <button
+          type="button"
+          className="botao-buscar"
+          onClick={() => buscarAgendamentos()}
+          disabled={carregando}
+        >
+          {carregando ? "Consultando..." : "Consultar agendamentos"}
+        </button>
+
+        {/* RESULTADOS */}
+
+        {buscou && !carregando && (
           <>
-            {/* ========================= */}
-            {/* PRÓXIMOS AGENDAMENTOS */}
-            {/* ========================= */}
+            {agendamentos.length === 0 ? (
+              <p className="sem-agendamentos">
+                Nenhum agendamento encontrado para este telefone.
+              </p>
+            ) : (
+              <>
+                {/* =====================================
+                    PRÓXIMOS AGENDAMENTOS
+                ===================================== */}
 
-            {proximosAgendamentos.length > 0 && (
-              <div className="resultado-cancelamento">
-                <h2>📅 Próximos agendamentos</h2>
+                {proximosAgendamentos.length > 0 && (
+                  <div className="proximos-cliente">
+                    <h2>📅 Próximos agendamentos</h2>
 
-                <div className="lista-cancelamentos">
-                  {proximosAgendamentos.map((agendamento) => (
-                    <div className="cancelamento-card" key={agendamento.id}>
-                      <h3>{agendamento.servico}</h3>
-
-                      <div className="dados-cancelamento">
-                        <p>
-                          👤 <strong>Cliente:</strong> {agendamento.nome}
-                        </p>
-
-                        <p>
-                          📅 <strong>Data:</strong>{" "}
-                          {formatarData(agendamento.data)}
-                        </p>
-
-                        <p>
-                          🕐 <strong>Horário:</strong> {agendamento.horario}
-                        </p>
-
-                        <p>
-                          💰 <strong>Valor:</strong> R${" "}
-                          {Number(agendamento.preco).toFixed(2)}
-                        </p>
-
-                        <p>
-                          📌 <strong>Status:</strong> {agendamento.status}
-                        </p>
-                      </div>
-
-                      <button
-                        type="button"
-                        className="botao-cancelar"
-                        onClick={() => cancelarAgendamento(agendamento.id)}
-                        disabled={cancelando === agendamento.id}
+                    {proximosAgendamentos.map((agendamento) => (
+                      <div
+                        className="agendamento-cliente-card"
+                        key={agendamento.id}
                       >
-                        {cancelando === agendamento.id
-                          ? "Cancelando..."
-                          : "❌ Cancelar agendamento"}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+                        <h3>{agendamento.servico}</h3>
 
-            {/* ========================= */}
-            {/* HISTÓRICO */}
-            {/* ========================= */}
+                        <p>📅 {formatarData(agendamento.data)}</p>
 
-            {historico.length > 0 && (
-              <div className="resultado-cancelamento historico-cliente">
-                <h2>📋 Histórico</h2>
+                        <p>🕐 {agendamento.horario}</p>
 
-                <div className="lista-cancelamentos">
-                  {historico.map((agendamento) => (
-                    <div
-                      className={`cancelamento-card historico-card ${
-                        agendamento.status === "Cancelado"
-                          ? "historico-cancelado"
-                          : ""
-                      }`}
-                      key={agendamento.id}
-                    >
-                      <h3>{agendamento.servico}</h3>
-
-                      <div className="dados-cancelamento">
                         <p>
-                          📅 <strong>Data:</strong>{" "}
-                          {formatarData(agendamento.data)}
+                          💰 R${" "}
+                          {Number(agendamento.preco)
+                            .toFixed(2)
+                            .replace(".", ",")}
                         </p>
 
-                        <p>
-                          🕐 <strong>Horário:</strong> {agendamento.horario}
+                        <p
+                          className={
+                            agendamento.status === "Confirmado"
+                              ? "status-cliente confirmado"
+                              : "status-cliente pendente"
+                          }
+                        >
+                          {agendamento.status}
                         </p>
 
-                        <p>
-                          💰 <strong>Valor:</strong> R${" "}
-                          {Number(agendamento.preco).toFixed(2)}
-                        </p>
+                        <button
+                          type="button"
+                          className="botao-cancelar"
+                          disabled={cancelando === agendamento.id}
+                          onClick={() => cancelarAgendamento(agendamento.id)}
+                        >
+                          {cancelando === agendamento.id
+                            ? "Cancelando..."
+                            : "Cancelar"}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* =====================================
+                    HISTÓRICO
+                ===================================== */}
+
+                {historico.length > 0 && (
+                  <div className="historico-cliente">
+                    <h2>📋 Histórico</h2>
+
+                    {historico.map((agendamento) => (
+                      <div
+                        className={`historico-card ${
+                          agendamento.status === "Cancelado"
+                            ? "historico-cancelado"
+                            : ""
+                        }`}
+                        key={agendamento.id}
+                      >
+                        <h3>{agendamento.servico}</h3>
+
+                        <p>📅 {formatarData(agendamento.data)}</p>
+
+                        <p>🕐 {agendamento.horario}</p>
 
                         <p>
-                          📌 <strong>Status:</strong>{" "}
-                          <span
-                            className={
-                              agendamento.status === "Cancelado"
-                                ? "status-historico-cancelado"
-                                : "status-historico-concluido"
-                            }
-                          >
-                            {agendamento.status}
-                          </span>
+                          💰 R${" "}
+                          {Number(agendamento.preco)
+                            .toFixed(2)
+                            .replace(".", ",")}
+                        </p>
+
+                        <p
+                          className={
+                            agendamento.status === "Cancelado"
+                              ? "status-historico-cancelado"
+                              : "status-historico-concluido"
+                          }
+                        >
+                          {agendamento.status}
                         </p>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </>
         )}

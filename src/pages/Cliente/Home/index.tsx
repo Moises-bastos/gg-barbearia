@@ -16,11 +16,9 @@ function Home() {
       <button
         type="button"
         className="botao-cancelar-home"
-        onClick={() =>
-          navigate("/cancelar-agendamento")
-        }
+        onClick={() => navigate("/cancelar-agendamento")}
       >
-         Cancelar agendamento
+        Consultar agendamento
       </button>
 
       <Hero />

@@ -1,7 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
-
 import type { ReactNode } from "react";
 
 type Props = {
@@ -14,13 +13,22 @@ function ProtectedRoute({ children }: Props) {
   const [mensalidadeAtiva, setMensalidadeAtiva] = useState(false);
 
   useEffect(() => {
+    let ativo = true;
+
     async function verificarUsuario() {
+      setLoading(true);
+
       const {
         data: { session },
       } = await supabase.auth.getSession();
 
+      if (!ativo) {
+        return;
+      }
+
       if (!session) {
         setLogado(false);
+        setMensalidadeAtiva(false);
         setLoading(false);
         return;
       }
@@ -33,8 +41,13 @@ function ProtectedRoute({ children }: Props) {
         .eq("id", 1)
         .single();
 
+      if (!ativo) {
+        return;
+      }
+
       if (error) {
-        console.log("Erro ao verificar mensalidade:", error);
+        console.error("Erro ao verificar mensalidade:", error);
+
         setMensalidadeAtiva(false);
         setLoading(false);
         return;
@@ -48,6 +61,30 @@ function ProtectedRoute({ children }: Props) {
     }
 
     verificarUsuario();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!ativo) {
+        return;
+      }
+
+      if (!session) {
+        setLogado(false);
+        setMensalidadeAtiva(false);
+        setLoading(false);
+        return;
+      }
+
+      setLogado(true);
+
+      verificarUsuario();
+    });
+
+    return () => {
+      ativo = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   if (loading) {
@@ -73,7 +110,7 @@ function ProtectedRoute({ children }: Props) {
   }
 
   if (!mensalidadeAtiva) {
-    return <Navigate to="/mensalidade" />;
+    return <Navigate to="/mensalidade" replace />;
   }
 
   return children;

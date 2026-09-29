@@ -19,25 +19,13 @@ function AppRoutes() {
       <Routes>
         <Route path="/" element={<Home />} />
 
-        <Route
-          path="/agendamento"
-          element={<Agendamento />}
-        />
+        <Route path="/agendamento" element={<Agendamento />} />
 
-        <Route
-          path="/cancelar-agendamento"
-          element={<CancelarAgendamento />}
-        />
+        <Route path="/cancelar-agendamento" element={<CancelarAgendamento />} />
 
-        <Route
-          path="/login"
-          element={<Login />}
-        />
+        <Route path="/login" element={<Login />} />
 
-        <Route
-          path="/mensalidade"
-          element={<Mensalidade />}
-        />
+        <Route path="/mensalidade" element={<Mensalidade />} />
 
         <Route
           path="/dashboard"
@@ -46,7 +34,6 @@ function AppRoutes() {
               <Dashboard />
             </ProtectedRoute>
           }
-
         />
 
         <Route
@@ -59,13 +46,14 @@ function AppRoutes() {
         />
         <Route
           path="/dias-bloqueados"
-          element={<DiasBloqueados />}
+          element={
+            <ProtectedRoute>
+              <DiasBloqueados />
+            </ProtectedRoute>
+          }
         />
-
       </Routes>
     </BrowserRouter>
-
-
   );
 }
 
