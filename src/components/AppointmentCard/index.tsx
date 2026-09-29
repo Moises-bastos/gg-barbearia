@@ -9,6 +9,7 @@ type Agendamento = {
   horario: string;
   data: string;
   status: string;
+  duracao: number | null;
 };
 
 type Props = {
@@ -26,7 +27,6 @@ function AppointmentCard({
 }: Props) {
   return (
     <div className="appointment-card">
-
       <div className="appointment-header">
         <h3>{agendamento.nome}</h3>
 
@@ -75,7 +75,6 @@ function AppointmentCard({
           </button>
         </div>
       )}
-
     </div>
   );
 }
