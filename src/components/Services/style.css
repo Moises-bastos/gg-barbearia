@@ -1,73 +1,158 @@
 .services {
-    width: 100%;
-    padding: 90px 8%;
-    background: #26241f;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+
+  width: 100%;
+  padding: 90px 8%;
+  background: #26241f;
 }
 
+/* TESOURA GIRANDO AO FUNDO */
+
+.services-scissors {
+  position: absolute;
+  z-index: -1;
+
+  top: 50%;
+  left: 50%;
+
+  width: clamp(220px, 32vw, 380px);
+  color: #e6d2b5;
+
+  opacity: 0.17;
+  pointer-events: none;
+
+  transform: translate(-50%, -50%);
+}
+
+.services-scissors svg {
+  display: block;
+  width: 100%;
+  height: auto;
+
+  animation: girar-tesoura 30s linear infinite;
+  transform-origin: center;
+}
+
+@keyframes girar-tesoura {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* TÍTULO */
+
 .services h2 {
-    text-align: center;
-    color: #E6D2B5;
-    font-size: 40px;
+  position: relative;
+  z-index: 1;
+
+  text-align: center;
+  color: #e6d2b5;
+  font-size: 40px;
 }
 
 .services p {
-    text-align: center;
-    color: #fff;
-    margin-top: 10px;
-    margin-bottom: 60px;
+  position: relative;
+  z-index: 1;
+
+  text-align: center;
+  color: #fff;
+  margin-top: 10px;
+  margin-bottom: 60px;
 }
+
+/* GRID */
 
 .services-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 30px;
+  position: relative;
+  z-index: 1;
+
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 30px;
 }
 
+/* CARDS */
+
 .card {
-    background: #1d1d1d;
-    border-radius: 12px;
-    padding: 30px;
-    transition: 0.3s;
-    cursor: pointer;
-    border: 1px solid transparent;
+  background: #1d1d1d;
+  border-radius: 12px;
+  padding: 30px;
+  transition: 0.3s;
+  cursor: pointer;
+  border: 1px solid transparent;
 }
 
 .card:hover {
-    transform: translateY(-8px);
-    border-color: #E6D2B5;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  transform: translateY(-8px);
+  border-color: #e6d2b5;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 
 .card h3 {
-    color: #E6D2B5;
-    margin-bottom: 15px;
+  color: #e6d2b5;
+  margin-bottom: 15px;
 }
 
 .card span {
-    display: block;
-    color: #bdbdbd;
-    margin-bottom: 10px;
+  display: block;
+  color: #bdbdbd;
+  margin-bottom: 10px;
 }
 
 .card strong {
-    display: block;
-    color: #fff;
-    font-size: 22px;
-    margin-bottom: 20px;
+  display: block;
+  color: #fff;
+  font-size: 22px;
+  margin-bottom: 20px;
 }
 
 .card button {
-    width: 100%;
-    padding: 12px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    background: #E6D2B5;
-    color: #111;
-    font-weight: bold;
-    transition: 0.3s;
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background: #e6d2b5;
+  color: #111;
+  font-weight: bold;
+  transition: 0.3s;
 }
 
 .card button:hover {
-    background: #d8bc97;
+  background: #d8bc97;
+}
+
+/* ACESSIBILIDADE */
+
+@media (prefers-reduced-motion: reduce) {
+  .services-scissors svg {
+    animation: none;
+  }
+
+  .card {
+    transition: none;
+  }
+}
+
+/* CELULAR */
+
+@media (max-width: 600px) {
+  .services {
+    padding: 65px 6%;
+  }
+
+  .services h2 {
+    font-size: 32px;
+  }
+
+  .services-scissors {
+    width: 230px;
+    opacity: 0.13;
+  }
 }

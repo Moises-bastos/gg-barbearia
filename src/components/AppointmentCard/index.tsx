@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import "./style.css";
 
 type Agendamento = {
@@ -25,8 +26,46 @@ function AppointmentCard({
   cancelarAgendamento,
   enviarMensagem,
 }: Props) {
+  const [mostrarAnimacao, setMostrarAnimacao] = useState(false);
+
+  const statusAnterior = useRef(agendamento.status);
+
+  useEffect(() => {
+    if (
+      statusAnterior.current === "Pendente" &&
+      agendamento.status === "Confirmado"
+    ) {
+      setMostrarAnimacao(true);
+    }
+
+    statusAnterior.current = agendamento.status;
+  }, [agendamento.status]);
+
+  const classeStatus =
+    agendamento.status === "Concluído"
+      ? "concluido"
+      : agendamento.status === "Cancelado"
+        ? "cancelado"
+        : agendamento.status === "Confirmado"
+          ? "confirmado"
+          : "pendente";
+
   return (
-    <div className="appointment-card">
+    <div
+      className={`appointment-card ${
+        mostrarAnimacao ? "confirmacao-animada" : ""
+      }`}
+    >
+      {mostrarAnimacao && (
+        <div
+          className="confirmacao-efeito"
+          aria-hidden="true"
+          onAnimationEnd={() => setMostrarAnimacao(false)}
+        >
+          $
+        </div>
+      )}
+
       <div className="appointment-header">
         <h3>{agendamento.nome}</h3>
 
@@ -39,17 +78,7 @@ function AppointmentCard({
 
       <p>💰 R$ {agendamento.preco}</p>
 
-      <p
-        className={
-          agendamento.status === "Concluído"
-            ? "status concluido"
-            : agendamento.status === "Cancelado"
-              ? "status cancelado"
-              : "status pendente"
-        }
-      >
-        {agendamento.status}
-      </p>
+      <p className={`status ${classeStatus}`}>{agendamento.status}</p>
 
       {agendamento.status === "Pendente" && (
         <div className="buttons">

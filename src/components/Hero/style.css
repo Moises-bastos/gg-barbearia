@@ -1,46 +1,126 @@
 .hero {
-    background-color: #1E1F1A;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
 
-    color: #F2E6D5;
+  background-color: #1e1f1a;
+  color: #f2e6d5;
 
-    min-height: 80vh;
+  min-height: 80vh;
 
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 
-    gap: 20px;
+  gap: 20px;
 
-    text-align: center;
+  text-align: center;
 }
+
+/* TESOURA GIRANDO */
+
+.hero-scissors {
+  position: absolute;
+  z-index: -1;
+
+  top: 50%;
+  left: 50%;
+
+  width: clamp(280px, 38vw, 440px);
+
+  color: #d9c2a3;
+
+  opacity: 0.2;
+  pointer-events: none;
+
+  transform: translate(-50%, -50%);
+}
+
+.hero-scissors svg {
+  display: block;
+  width: 100%;
+  height: auto;
+
+  animation: girar-tesoura-hero 35s linear infinite;
+}
+
+@keyframes girar-tesoura-hero {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* TÍTULO */
 
 .hero h1 {
-    font-size: 64px;
+  position: relative;
+  z-index: 1;
+
+  font-size: 64px;
 }
+
+/* DESCRIÇÃO */
 
 .hero p {
-    font-size: 22px;
+  position: relative;
+  z-index: 1;
+
+  font-size: 22px;
 }
 
+/* BOTÃO */
+
 .hero button {
-    background-color: #D9C2A3;
+  position: relative;
+  z-index: 1;
 
-    color: #1E1F1A;
+  background-color: #d9c2a3;
+  color: #1e1f1a;
 
-    border: none;
+  border: none;
 
-    padding: 15px 35px;
+  padding: 15px 35px;
 
-    border-radius: 8px;
+  border-radius: 8px;
 
-    cursor: pointer;
+  cursor: pointer;
 
-    font-size: 18px;
+  font-size: 18px;
 
-    transition: 0.3s;
+  transition: 0.3s;
 }
 
 .hero button:hover {
-    transform: scale(1.05);
+  transform: scale(1.05);
+}
+
+/* CELULAR */
+
+@media (max-width: 600px) {
+  .hero h1 {
+    font-size: 42px;
+  }
+
+  .hero p {
+    font-size: 17px;
+    padding: 0 15px;
+  }
+
+  .hero-scissors {
+    width: 280px;
+    opacity: 0.15;
+  }
+}
+
+/* ACESSIBILIDADE */
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-scissors svg {
+    animation: none;
+  }
 }
